@@ -1,6 +1,7 @@
 package grss
 
 import (
+	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
 )
@@ -56,10 +57,10 @@ xmlns="http://channel.netscape.com/rdf/simple/0.9/">
 `
 
 	a, err := RssParse(strings.NewReader(s))
-	assert(t, err == nil, err)
+	assert.Nil(t, err)
 
-	assert(t, a.XMLName.Local == "rdf:RDF", a)
-	assert(t, a.Attributes[0].Name.Local == "xmlns:rdf", a)
+	assert.Equal(t, a.XMLName.Local, "rdf:RDF", a)
+	assert.Equal(t, a.Attributes[0].Name.Local, "xmlns:rdf", a)
 
 }
 
@@ -85,12 +86,12 @@ func Test_RssFeed_002(t *testing.T) {
 `
 
 	a, err := RssParse(strings.NewReader(s))
-	assert(t, err == nil, err)
+	assert.Nil(t, err)
 
-	assert(t, a.XMLName.Local == "rss", a)
-	assert(t, a.Version == "0.91", a)
-	assert(t, a.Channel.Language == "en", a)
-	assert(t, a.Channel.Image.Title == "Scripting News", a)
+	assert.Equal(t, a.XMLName.Local, "rss", a)
+	assert.Equal(t, a.Version, "0.91", a)
+	assert.Equal(t, a.Channel.Language, "en", a)
+	assert.Equal(t, a.Channel.Image.Title, "Scripting News", a)
 
 }
 
@@ -148,18 +149,18 @@ func Test_RssFeed_003(t *testing.T) {
 `
 
 	a, err := RssParse(strings.NewReader(s))
-	assert(t, err == nil, err)
+	assert.Nil(t, err)
 
-	assert(t, a.XMLName.Local == "rss", a)
-	assert(t, a.Version == "0.91", a)
-	assert(t, a.Channel.Copyright == "Copyright 1997-1999 UserLand Software, Inc.", a)
-	assert(t, a.Channel.Image.Height == "40", a)
-	assert(t, a.Channel.Image.Description == "What is this used for?", a)
-	assert(t, a.Channel.SkipHours.Hours[5] == "11", a)
-	assert(t, a.Channel.SkipDays.Days[0] == "Sunday", a)
-	assert(t, string(a.Channel.Rating.Content) == "(PICS-1.1 \"http://www.rsac.org/ratingsv01.html\" l gen true comment \"RSACi North America Server\" for \"http://www.rsac.org\" on \"1996.04.16T08:15-0500\" r (n 0 s 0 v 0 l 0))", a)
-	assert(t, a.Channel.Items[0].Link == "http://bar", a)
-	assert(t, a.Channel.TextInput.Title == "Search Now!", a)
+	assert.Equal(t, a.XMLName.Local, "rss", a)
+	assert.Equal(t, a.Version, "0.91", a)
+	assert.Equal(t, a.Channel.Copyright, "Copyright 1997-1999 UserLand Software, Inc.", a)
+	assert.Equal(t, a.Channel.Image.Height, "40", a)
+	assert.Equal(t, a.Channel.Image.Description, "What is this used for?", a)
+	assert.Equal(t, a.Channel.SkipHours.Hours[5], "11", a)
+	assert.Equal(t, a.Channel.SkipDays.Days[0], "Sunday", a)
+	assert.Equal(t, string(a.Channel.Rating.Content), "(PICS-1.1 \"http://www.rsac.org/ratingsv01.html\" l gen true comment \"RSACi North America Server\" for \"http://www.rsac.org\" on \"1996.04.16T08:15-0500\" r (n 0 s 0 v 0 l 0))", a)
+	assert.Equal(t, a.Channel.Items[0].Link, "http://bar", a)
+	assert.Equal(t, a.Channel.TextInput.Title, "Search Now!", a)
 
 }
 
@@ -206,13 +207,13 @@ func Test_RssFeed_004(t *testing.T) {
 `
 
 	a, err := RssParse(strings.NewReader(s))
-	assert(t, err == nil, err)
+	assert.Nil(t, err)
 
-	assert(t, a.Charset == "EuC-JP", a)
-	assert(t, a.XMLName.Local == "rss", a)
-	assert(t, a.Version == "0.91", a)
-	assert(t, a.Channel.Language == "ja", a)
-	assert(t, a.Channel.Items[3].Link == "http://www.mozilla.org/status/", a)
+	assert.Equal(t, a.Charset, "EuC-JP", a)
+	assert.Equal(t, a.XMLName.Local, "rss", a)
+	assert.Equal(t, a.Version, "0.91", a)
+	assert.Equal(t, a.Channel.Language, "ja", a)
+	assert.Equal(t, a.Channel.Items[3].Link, "http://www.mozilla.org/status/", a)
 
 }
 
@@ -275,12 +276,12 @@ func Test_RssFeed_005(t *testing.T) {
 `
 
 	a, err := RssParse(strings.NewReader(s))
-	assert(t, err == nil, err)
+	assert.Nil(t, err)
 
-	assert(t, a.Charset == "ISO-8859-1", a)
-	assert(t, a.XMLName.Local == "rss", a)
-	assert(t, a.Version == "0.91", a)
-	assert(t, len(a.Channel.Items) == 6, a)
+	assert.Equal(t, a.Charset, "ISO-8859-1", a)
+	assert.Equal(t, a.XMLName.Local, "rss", a)
+	assert.Equal(t, a.Version, "0.91", a)
+	assert.Equal(t, len(a.Channel.Items), 6, a)
 
 }
 
@@ -394,20 +395,20 @@ The lyrics are &lt;a href=&quot;http://www.cs.cmu.edu/~mleone/gdead/dead-lyrics/
 `
 
 	a, err := RssParse(strings.NewReader(s))
-	assert(t, err == nil, err)
+	assert.Nil(t, err)
 
-	assert(t, a.XMLName.Local == "rss", a)
-	assert(t, a.Version == "0.92", a)
-	assert(t, a.Channel.Title == "Dave Winer: Grateful Dead", a.Channel)
-	assert(t, a.Channel.Link == "http://www.scripting.com/blog/categories/gratefulDead.html", a.Channel)
-	assert(t, a.Channel.Description == "A high-fidelity Grateful Dead song every day. This is where we're experimenting with enclosures on RSS news items that download when you're not using your computer. If it works (it will) it will be the end of the Click-And-Wait multimedia experience on the Internet. ", a.Channel)
-	assert(t, a.Channel.Cloud.Attributes[0].Value == "data.ourfavoritesongs.com", a.Channel.Cloud)
-	assert(t, a.Channel.Cloud.Attributes[4].Name.Local == "protocol", a.Channel.Cloud)
-	assert(t, len(a.Channel.Items) == 22, a.Channel.Items)
-	assert(t, a.Channel.Items[0].Enclosure.Type == "audio/mpeg", a.Channel.Items[0].Enclosure)
-	assert(t, a.Channel.Items[1].Source.Url == "http://scriptingnews.userland.com/xml/scriptingNews2.xml", a.Channel.Items[1].Source)
-	assert(t, a.Channel.Items[1].Source.Text == "Scripting News", a.Channel.Items[1].Source)
-	assert(t, a.Channel.Items[21].Enclosure.Length == "5272510", a.Channel.Items[21].Enclosure)
+	assert.Equal(t, a.XMLName.Local, "rss", a)
+	assert.Equal(t, a.Version, "0.92", a)
+	assert.Equal(t, a.Channel.Title, "Dave Winer: Grateful Dead", a.Channel)
+	assert.Equal(t, a.Channel.Link, "http://www.scripting.com/blog/categories/gratefulDead.html", a.Channel)
+	assert.Equal(t, a.Channel.Description, "A high-fidelity Grateful Dead song every day. This is where we're experimenting with enclosures on RSS news items that download when you're not using your computer. If it works (it will) it will be the end of the Click-And-Wait multimedia experience on the Internet. ", a.Channel)
+	assert.Equal(t, a.Channel.Cloud.Attributes[0].Value, "data.ourfavoritesongs.com", a.Channel.Cloud)
+	assert.Equal(t, a.Channel.Cloud.Attributes[4].Name.Local, "protocol", a.Channel.Cloud)
+	assert.Equal(t, len(a.Channel.Items), 22, a.Channel.Items)
+	assert.Equal(t, a.Channel.Items[0].Enclosure.Type, "audio/mpeg", a.Channel.Items[0].Enclosure)
+	assert.Equal(t, a.Channel.Items[1].Source.Url, "http://scriptingnews.userland.com/xml/scriptingNews2.xml", a.Channel.Items[1].Source)
+	assert.Equal(t, a.Channel.Items[1].Source.Text, "Scripting News", a.Channel.Items[1].Source)
+	assert.Equal(t, a.Channel.Items[21].Enclosure.Length, "5272510", a.Channel.Items[21].Enclosure)
 
 }
 
@@ -503,16 +504,16 @@ func Test_RssFeed_007(t *testing.T) {
 `
 
 	a, err := RssParse(strings.NewReader(s))
-	assert(t, err == nil, err)
+	assert.Nil(t, err)
 
-	assert(t, a.XMLName.Local == "rss", a)
-	assert(t, a.Version == "2.0", a)
-	assert(t, a.Attributes[0].Name.Local == "xmlns:blogChannel", a)
-	assert(t, a.Channel.ExtensionElement[2].XMLName.Local == "blogChannel:blink", a.Channel.ExtensionElement)
-	assert(t, a.Channel.Ttl == "40", a.Channel)
-	assert(t, len(a.Channel.Items) == 9, a.Channel)
-	assert(t, a.Channel.Items[8].Guid.Guid == "http://scriptingnews.userland.com/backissues/2002/09/29#reallyEarlyMorningNocoffeeNotes", a.Channel)
-	assert(t, a.Channel.Items[8].PubDate == "Sun, 29 Sep 2002 11:13:10 GMT", a.Channel)
+	assert.Equal(t, a.XMLName.Local, "rss", a)
+	assert.Equal(t, a.Version, "2.0", a)
+	assert.Equal(t, a.Attributes[0].Name.Local, "xmlns:blogChannel", a)
+	assert.Equal(t, a.Channel.ExtensionElement[2].XMLName.Local, "blogChannel:blink", a.Channel.ExtensionElement)
+	assert.Equal(t, a.Channel.Ttl, "40", a.Channel)
+	assert.Equal(t, len(a.Channel.Items), 9, a.Channel)
+	assert.Equal(t, a.Channel.Items[8].Guid.Guid, "http://scriptingnews.userland.com/backissues/2002/09/29#reallyEarlyMorningNocoffeeNotes", a.Channel)
+	assert.Equal(t, a.Channel.Items[8].PubDate, "Sun, 29 Sep 2002 11:13:10 GMT", a.Channel)
 
 }
 
@@ -544,18 +545,19 @@ func Test_RssFeed_008(t *testing.T) {
 `
 
 	a, err := RssParse(strings.NewReader(s))
-	assert(t, err == nil, err)
+	assert.Nil(t, err)
 
-	assert(t, a.XMLName.Local == "rss", a)
-	assert(t, a.Version == "2.0", a)
-	assert(t, a.Channel.Items[0].Title == "喔喔喔", a)
-	assert(t, a.Channel.Items[0].Content.XMLName.Local == "content:encoded", a.Channel.Items[0].Content)
-	assert(t, string(a.Channel.Items[0].Content.Content) == "&lt;section&gt;  &lt;article&gt;&lt;h3&gt;喔喔喔喔喔喔喔喔喔喔喔喔期&lt;/h3&gt;&lt;p&gt;喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔12月6喔喔喔喔喔喔喔喔。&lt;/p&gt;&lt;p&gt;&lt;a href=\"https://www.example.com/politics/2022/11/09/example-news-live-updates/#link-example\"&gt;喔喔喔喔喔&lt;/a&gt;喔喔喔喔喔喔喔喔喔喔去40喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔1986喔喔喔喔喔喔&lt;/p&gt;&lt;p&gt;喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔。&lt;/p&gt;&lt;p&gt;喔&lt;a href=\"https://www.example.com/example/2022/results/example?example-data-id=2022-SG&gt;", a.Channel.Items[0].Content)
+	assert.Equal(t, a.XMLName.Local, "rss", a)
+	assert.Equal(t, a.Version, "2.0", a)
+	assert.Equal(t, a.Channel.Items[0].Title, "喔喔喔", a)
+	assert.Equal(t, a.Channel.Items[0].Content.XMLName.Local, "content:encoded", a.Channel.Items[0].Content)
+	assert.Equal(t, string(a.Channel.Items[0].Content.Content), "&lt;section&gt;  &lt;article&gt;&lt;h3&gt;喔喔喔喔喔喔喔喔喔喔喔喔期&lt;/h3&gt;&lt;p&gt;喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔12月6喔喔喔喔喔喔喔喔。&lt;/p&gt;&lt;p&gt;&lt;a href=\"https://www.example.com/politics/2022/11/09/example-news-live-updates/#link-example\"&gt;喔喔喔喔喔&lt;/a&gt;喔喔喔喔喔喔喔喔喔喔去40喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔1986喔喔喔喔喔喔&lt;/p&gt;&lt;p&gt;喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔。&lt;/p&gt;&lt;p&gt;喔&lt;a href=\"https://www.example.com/example/2022/results/example?example-data-id=2022-SG&gt;", a.Channel.Items[0].Content)
 
 }
 
 func Test_RssFeed_009(t *testing.T) {
 	// ISO-8859-1
+	// https://github.com/SlyMarbo/rss/blob/9ae0f45449d6f6424a61969aeedeb14cd5d40094/testdata/rss_0.91
 	s := `
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <rss version="0.91">
@@ -610,10 +612,225 @@ func Test_RssFeed_009(t *testing.T) {
 `
 
 	a, err := RssParse(strings.NewReader(s))
-	assert(t, err == nil, err)
+	assert.Nil(t, err)
 
-	assert(t, a.XMLName.Local == "rss", a)
-	assert(t, a.Version == "0.91", a)
-	assert(t, a.Charset == "ISO-8859-1", a)
+	assert.Equal(t, a.XMLName.Local, "rss", a)
+	assert.Equal(t, a.Version, "0.91", a)
+	assert.Equal(t, a.Charset, "ISO-8859-1", a)
+
+}
+
+func Test_RssFeed_010(t *testing.T) {
+	// itunes
+	// https://help.apple.com/itc/podcasts_connect/#/itcbaf351599
+	s := `
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Hiking Treks</title>
+    <link>https://www.apple.com/itunes/podcasts/</link>
+    <language>en-us</language>
+    <copyright>&#169; 2020 John Appleseed</copyright>
+    <itunes:author>The Sunset Explorers</itunes:author>
+    <description>
+      Love to get outdoors and discover nature&apos;s treasures? Hiking Treks is the
+      show for you. We review hikes and excursions, review outdoor gear and interview
+      a variety of naturalists and adventurers. Look for new episodes each week.
+    </description>
+    <itunes:type>serial</itunes:type>
+    <itunes:owner>
+      <itunes:name>Sunset Explorers</itunes:name>
+      <itunes:email>mountainscape@icloud.com</itunes:email>
+    </itunes:owner>
+    <itunes:image
+      href="https://applehosted.podcasts.apple.com/hiking_treks/artwork.png"
+    />
+	<image>
+		<title>title</title>
+	</image>
+    <itunes:category text="Sports">
+      <itunes:category text="Wilderness"/>
+    </itunes:category>
+    <itunes:explicit>false</itunes:explicit>
+    <item>
+      <itunes:episodeType>trailer</itunes:episodeType>
+      <itunes:title>Hiking Treks Trailer</itunes:title>
+      <description>
+          <![CDATA[The Sunset Explorers share tips, techniques and recommendations for
+          great hikes and adventures around the United States. Listen on 
+          <a href="https://www.apple.com/itunes/podcasts/">Apple Podcasts</a>.]]>
+      </description>
+      <enclosure 
+        length="498537" 
+        type="audio/mpeg" 
+        url="http://example.com/podcasts/everything/AllAboutEverythingEpisode4.mp3"
+      />
+      <guid>aae20190418</guid>
+      <pubDate>Tue, 8 Jan 2019 01:15:00 GMT</pubDate>
+      <itunes:duration>1079</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <itunes:episodeType>full</itunes:episodeType>
+      <itunes:episode>4</itunes:episode>
+      <itunes:season>2</itunes:season>
+      <title>S02 EP04 Mt. Hood, Oregon</title>
+      <description>
+        Tips for trekking around the tallest mountain in Oregon
+      </description>
+      <enclosure
+        length="8727310" 
+        type="audio/x-m4a" 
+        url="http://example.com/podcasts/everything/mthood.m4a"
+      />
+      <guid>aae20190606</guid>
+      <pubDate>Tue, 07 May 2019 12:00:00 GMT</pubDate>
+      <itunes:duration>1024</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <itunes:episodeType>full</itunes:episodeType>
+      <itunes:episode>3</itunes:episode>
+      <itunes:season>2</itunes:season>
+      <title>S02 EP03 Bouldering Around Boulder</title>
+      <description>
+        We explore fun walks to climbing areas about the beautiful Colorado city of Boulder.
+      </description>
+      <itunes:image
+        href="http://example.com/podcasts/everything/AllAboutEverything/Episode2.jpg"
+      />
+      <link>href="http://example.com/podcasts/everything/</link>
+      <enclosure 
+        length="5650889" 
+        type="video/mp4" 
+        url="http://example.com/podcasts/boulder.mp4"
+      />
+      <guid>aae20190530</guid>
+      <pubDate>Tue, 30 Apr 2019 13:00:00 EST</pubDate>
+      <itunes:duration>3627</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <itunes:episodeType>full</itunes:episodeType>
+      <itunes:episode>2</itunes:episode>
+      <itunes:season>2</itunes:season>
+      <title>S02 EP02 Caribou Mountain, Maine</title>
+      <description>
+        Put your fitness to the test with this invigorating hill climb.
+      </description>
+      <itunes:image
+        href="http://example.com/podcasts/everything/AllAboutEverything/Episode3.jpg"
+      />
+      <enclosure 
+        length="5650889"
+        type="audio/x-m4v" 
+        url="http://example.com/podcasts/everything/caribou.m4v"
+      />
+      <guid>aae20190523</guid>
+      <pubDate>Tue, 23 May 2019 02:00:00 -0700</pubDate>
+      <itunes:duration>2434</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <itunes:episodeType>full</itunes:episodeType>
+      <itunes:episode>1</itunes:episode>
+      <itunes:season>2</itunes:season>
+      <title>S02 EP01 Stawamus Chief</title>
+      <description>
+        We tackle Stawamus Chief outside of Vancouver, BC and you should too!
+      </description>
+      <enclosure
+        length="498537" 
+        type="audio/mpeg" 
+        url="http://example.com/podcasts/everything/AllAboutEverythingEpisode4.mp3"
+      />
+      <guid>aae20190516</guid>
+      <pubDate>2019-02-16T07:00:00.000Z</pubDate>
+      <itunes:duration>13:24</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <itunes:episodeType>full</itunes:episodeType>
+      <itunes:episode>4</itunes:episode>
+      <itunes:season>1</itunes:season>
+      <title>S01 EP04 Kuliouou Ridge Trail</title>
+      <description>
+        Oahu, Hawaii, has some picturesque hikes and this is one of the best!
+      </description>
+      <enclosure
+        length="498537" 
+        type="audio/mpeg" 
+        url="http://example.com/podcasts/everything/AllAboutEverythingEpisode4.mp3"
+      />
+      <guid>aae20190509</guid>
+      <pubDate>Tue, 27 Nov 2018 01:15:00 +0000</pubDate>
+      <itunes:duration>929</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <itunes:episodeType>full</itunes:episodeType>
+      <itunes:episode>3</itunes:episode>
+      <itunes:season>1</itunes:season>
+      <title>S01 EP03 Blood Mountain Loop</title>
+      <description>
+        Hiking the Appalachian Trail and Freeman Trail in Georgia
+      </description>
+      <enclosure 
+        length="498537" 
+        type="audio/mpeg" 
+        url="http://example.com/podcasts/everything/AllAboutEverythingEpisode4.mp3"
+      />
+      <guid>aae20190502</guid>
+      <pubDate>Tue, 23 Oct 2018 01:15:00 +0000</pubDate>
+      <itunes:duration>1440</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <itunes:episodeType>full</itunes:episodeType>
+      <itunes:episode>2</itunes:episode>
+      <itunes:season>1</itunes:season>
+      <title>S01 EP02 Garden of the Gods Wilderness</title>
+      <description>
+        Wilderness Area Garden of the Gods in Illinois is a delightful spot for 
+        an extended hike.
+      </description>
+      <enclosure 
+        length="498537" 
+        type="audio/mpeg" 
+        url="http://example.com/podcasts/everything/AllAboutEverythingEpisode4.mp3"
+      />
+      <guid>aae20190425</guid>
+      <pubDate>Tue, 18 Sep 2018 01:15:00 +0000</pubDate>
+      <itunes:duration>839</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <itunes:episodeType>full</itunes:episodeType>
+      <itunes:episode>1</itunes:episode>
+      <itunes:season>1</itunes:season>
+      <title>S01 EP01 Upper Priest Lake Trail to Continental Creek Trail</title>
+      <description>
+        We check out this powerfully scenic hike following the river in the Idaho
+        Panhandle National Forests.
+      </description>
+      <enclosure 
+        length="498537" 
+        type="audio/mpeg" 
+        url="http://example.com/podcasts/everything/AllAboutEverythingEpisode4.mp3"
+      />
+      <guid>aae20190418a</guid>
+      <pubDate>Tue, 14 Aug 2018 01:15:00 +0000</pubDate>
+      <itunes:duration>1399</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+  </channel>
+</rss>
+`
+
+	a, err := RssParse(strings.NewReader(s))
+	assert.Nil(t, err)
+
+	assert.Equal(t, a.XMLName.Local, "rss", a)
+	assert.Equal(t, a.Version, "2.0", a)
 
 }

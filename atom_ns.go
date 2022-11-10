@@ -6,7 +6,7 @@ const (
 	xmlnsPrefix = "xmlns"
 )
 
-func (f *AtomFeed) PatchXmlns() {
+func (f *AtomFeed) PatchNS() {
 	//var xmlns string
 	//for i := range f.UndefinedAttribute {
 	//	if f.UndefinedAttribute[i].Name.Local == xmlnsPrefix {
