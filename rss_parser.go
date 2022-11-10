@@ -24,6 +24,6 @@ func RssParse(r io.Reader) (*RssFeed, error) {
 		return nil, err
 	}
 
-	f.PatchXmlns()
+	f.PatchNS()
 	return f, nil
 }

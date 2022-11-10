@@ -142,7 +142,7 @@ type RssEnclosure struct {
 // 2.0.1
 type RssGuid struct {
 	// IsPermaLink If the guid element has an attribute named isPermaLink with a value of true, the reader may assume that it is a permalink to the item, that is, a url that can be opened in a Web browser, that points to the full item described by the <item> element. IsPermaLink is optional, its default value is true. If its value is false, the guid may not be assumed to be a url, or a url to anything in particular.
-	IsPermaLink string `xml:"isPermaLink,attr,isPermaLink"`
+	IsPermaLink string `xml:"isPermaLink,attr,omitempty"`
 	Guid        string `xml:",chardata"`
 }
 

@@ -24,6 +24,6 @@ func AtomParse(r io.Reader) (*AtomFeed, error) {
 		return nil, err
 	}
 
-	f.PatchXmlns()
+	f.PatchNS()
 	return f, nil
 }

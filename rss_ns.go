@@ -1,8 +1,10 @@
 package grss
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+)
 
-func (f *RssFeed) PatchXmlns() {
+func (f *RssFeed) PatchNS() {
 
 	var getPrefix = func(space string) string {
 		if space == "" {
@@ -41,13 +43,6 @@ func (f *RssFeed) PatchXmlns() {
 		f.Channel.ExtensionElement[i].XMLName.Local = prefix + ":" + f.Channel.ExtensionElement[i].XMLName.Local
 	}
 
-	for i := range f.Attributes {
-		if f.Attributes[i].Name.Space == xmlnsPrefix {
-			f.Attributes[i].Name.Local = xmlnsPrefix + ":" + f.Attributes[i].Name.Local
-			f.Attributes[i].Name.Space = ""
-		}
-	}
-
 	for i := range f.Channel.Items {
 		if f.Channel.Items[i].ContentUnmarshal == nil {
 			continue
@@ -64,6 +59,14 @@ func (f *RssFeed) PatchXmlns() {
 			Content: f.Channel.Items[i].ContentUnmarshal.Content,
 		}
 		f.Channel.Items[i].ContentUnmarshal = nil
+	}
+
+	//
+	for i := range f.Attributes {
+		if f.Attributes[i].Name.Space == xmlnsPrefix {
+			f.Attributes[i].Name.Local = xmlnsPrefix + ":" + f.Attributes[i].Name.Local
+			f.Attributes[i].Name.Space = ""
+		}
 	}
 
 	for i := range f.Channel.Attributes {

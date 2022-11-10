@@ -1,7 +1,11 @@
 package grss
 
+import "encoding/json"
+
 // v1.0 https://www.jsonfeed.org/version/1/
 // v1.1 https://www.jsonfeed.org/version/1.1/
+
+// https://help.apple.com/itc/podcasts_connect/#/itcb54353390
 
 const (
 	// JSONMime https://www.jsonfeed.org/version/1.1/#suggestions-for-publishers-a-name-suggestions-for-publishers-a
@@ -11,6 +15,8 @@ const (
 
 // JSONFeed JSONFeed
 type JSONFeed struct {
+	InnerMap map[string]interface{} `json:"-"`
+
 	// v1.0 https://www.jsonfeed.org/version/1/
 
 	// Version version (required, string) is the URL of the version of the format the feed uses. This should appear at the very top, though we recognize that not all JSON generators allow for ordering.
@@ -110,6 +116,9 @@ type JSONItem struct {
 	// Attachments An individual item may have one or more attachments.
 	Attachments *[]JSONAttachments `json:"attachments,omitempty"`
 
+	// Extensions Publishers can use custom objects in JSON Feeds. Names must start with an _ character followed by a letter. Custom objects can appear anywhere in a feed.
+	Extensions map[string]interface{} `json:"-"`
+
 	// v1.1 https://www.jsonfeed.org/version/1.1/
 
 	// Authors authors (optional, array of objects) has the same structure as the top-level authors. If not specified in an item, then the top-level authors, if present, are the authors of the item.
@@ -147,4 +156,59 @@ type JSONAttachments struct {
 
 	// DurationInSeconds duration_in_seconds (optional, number) specifies how long it takes to listen to or watch, when played at normal speed.
 	DurationInSeconds uint64 `json:"duration_in_seconds,omitempty"`
+}
+
+func (j *JSONFeed) UnmarshalJSON(b []byte) error {
+	var m = map[string]interface{}{}
+	err := json.Unmarshal(b, &m)
+	if err != nil {
+		return err
+	}
+
+	type inner JSONFeed
+	err = json.Unmarshal(b, (*inner)(j))
+	if err != nil {
+		return err
+	}
+
+	j.InnerMap = m
+	j.Extensions = map[string]interface{}{}
+
+	for k, v := range m {
+		if len(k) >= 2 &&
+			k[0] == '_' &&
+			(('a' <= k[1] && k[1] <= 'z') || ('A' <= k[1] && k[1] <= 'Z')) {
+			j.Extensions[k] = v
+		}
+	}
+
+	switch items := m["items"].(type) {
+	case []interface{}:
+		{
+			if len(items) != len(j.Items) {
+				break
+			}
+			for i := range j.Items {
+				j.Items[i].Extensions = map[string]interface{}{}
+				switch item := items[i].(type) {
+				case map[string]interface{}:
+					{
+						for k, v := range item {
+							if len(k) >= 2 &&
+								k[0] == '_' &&
+								(('a' <= k[1] && k[1] <= 'z') || ('A' <= k[1] && k[1] <= 'Z')) {
+								j.Items[i].Extensions[k] = v
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func (j *JSONFeed) MarshalJSON() ([]byte, error) {
+	return json.Marshal(j.InnerMap)
 }
