@@ -15,7 +15,7 @@ const (
 
 // JSONFeed JSONFeed
 type JSONFeed struct {
-	InnerMap map[string]interface{} `json:"-"`
+	Inner map[string]interface{} `json:"-"`
 
 	// v1.0 https://www.jsonfeed.org/version/1/
 
@@ -171,7 +171,7 @@ func (j *JSONFeed) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	j.InnerMap = m
+	j.Inner = m
 	j.Extensions = map[string]interface{}{}
 
 	for k, v := range m {
@@ -210,5 +210,5 @@ func (j *JSONFeed) UnmarshalJSON(b []byte) error {
 }
 
 func (j *JSONFeed) MarshalJSON() ([]byte, error) {
-	return json.Marshal(j.InnerMap)
+	return json.Marshal(j.Inner)
 }

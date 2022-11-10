@@ -1,8 +1,8 @@
 package grss
 
 import (
-	"encoding/json"
 	"github.com/stretchr/testify/assert"
+	"strings"
 	"testing"
 )
 
@@ -41,9 +41,12 @@ func Test_JSONFeed_001(t *testing.T) {
   ]
 }
 `
-	a := &JSONFeed{}
-	err := json.Unmarshal([]byte(s), a)
+	//a := &JSONFeed{}
+	//err := json.Unmarshal([]byte(s), a)
+	_, j, err := Parse(strings.NewReader(s))
 	assert.Nil(t, err)
+
+	a := j.(*JSONFeed)
 
 	assert.Equal(t, a.Items[1].Title, "Announcing JSON Feed", a)
 

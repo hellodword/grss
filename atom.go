@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/hellodword/grss/common/slices"
+	"github.com/hellodword/grss/pkg/etree"
 	"reflect"
 	"regexp"
 )
@@ -263,7 +264,7 @@ type AtomPersonConstruct struct {
 //	      AtomEntry*
 //	   }
 type AtomFeed struct {
-	Charset string `xml:"-"`
+	Inner *etree.Document `xml:"-"`
 
 	XMLName xml.Name `xml:"feed"`
 
