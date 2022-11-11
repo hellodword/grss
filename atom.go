@@ -2,12 +2,7 @@ package grss
 
 import (
 	"encoding/xml"
-	"errors"
-	"fmt"
-	"github.com/hellodword/grss/common/slices"
 	"github.com/hellodword/grss/pkg/etree"
-	"reflect"
-	"regexp"
 )
 
 // https://datatracker.ietf.org/doc/html/rfc4287
@@ -22,14 +17,6 @@ const (
 	// AtomMime https://datatracker.ietf.org/doc/html/rfc4287#section-7
 	AtomMime         = "application/atom+xml"
 	AtomMimeFallback = "application/xml"
-)
-
-var (
-	ErrXsdStringNotMatchingPattern   = errors.New("xsd:string not matching pattern")
-	ErrXsdStringNotMatchingMinLength = errors.New("xsd:string not matching minLength")
-	ErrXsdStringNotInDefaults        = errors.New("xsd:string not in defaults")
-
-	ErrAtomTextConstructType = errors.New(`atomTextConstruct type must in ["", "text", "html", "xhtml"]`)
 )
 
 // AtomUri Unconstrained; it's not entirely clear how IRI fit into
@@ -48,40 +35,7 @@ type AtomCommonAttributes struct {
 	Base     AtomUri         `xml:"base,attr,omitempty"`
 	Language AtomLanguageTag `xml:"lang,attr,omitempty"`
 	// https://github.com/golang/go/issues/3633#issuecomment-328678522
-	UndefinedAttribute []xml.Attr `xml:",any,attr,omitempty"`
-}
-
-func xsdStringUnmarshalXML(d *xml.Decoder, start xml.StartElement,
-	t reflect.Type, s *string,
-	pattern string, minLength uint,
-	defaultValues []string) error {
-
-	err := d.DecodeElement(s, &start)
-	if err != nil {
-		return err
-	}
-
-	if uint(len(*s)) < minLength {
-		return fmt.Errorf("UnmarshalXML %s as %s: %w", start.Name.Local, t, ErrXsdStringNotMatchingMinLength)
-	}
-
-	if pattern != "" {
-		r, err := regexp.Compile(pattern)
-		if err != nil {
-			return err
-		}
-		if !r.Match([]byte(*s)) {
-			return fmt.Errorf("UnmarshalXML %s as %s: %w", start.Name.Local, t, ErrXsdStringNotMatchingPattern)
-		}
-	}
-
-	if len(defaultValues) > 0 {
-		if !slices.ContainsString(defaultValues, *s) {
-			return fmt.Errorf("UnmarshalXML %s as %s: %w", start.Name.Local, t, ErrXsdStringNotInDefaults)
-		}
-	}
-
-	return nil
+	UndefinedAttribute []etree.Attr `xml:",any,attr,omitempty"`
 }
 
 // AtomLanguageTag As defined in RFC 3066
@@ -91,24 +45,10 @@ func xsdStringUnmarshalXML(d *xml.Decoder, start xml.StartElement,
 //	}
 type AtomLanguageTag string
 
-func (a *AtomLanguageTag) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	return xsdStringUnmarshalXML(d, start,
-		reflect.TypeOf(*a), (*string)(a),
-		"^([A-Za-z]{1,8}(-[A-Za-z0-9]{1,8})*)?$", 0,
-		nil)
-}
-
 // AtomEmailAddress Whatever an email address is, it contains at least one @
 //
 //	AtomEmailAddress = xsd:string { pattern = ".+@.+" }
 type AtomEmailAddress string
-
-func (a *AtomEmailAddress) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	return xsdStringUnmarshalXML(d, start,
-		reflect.TypeOf(*a), (*string)(a),
-		"^.+@.+$", 0,
-		nil)
-}
 
 // AtomTextConstruct = AtomPlainTextConstruct | AtomXHTMLTextConstruct
 type AtomTextConstruct struct {
@@ -155,67 +95,6 @@ type AtomXhtmlDiv struct {
 	UndefinedAttribute []xml.Attr `xml:",any,attr,omitempty"`
 	// TODO text | anyXHTML
 	Text []byte `xml:",innerxml"`
-}
-
-func (t *AtomTextConstruct) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	switch t.Type {
-	default:
-		{
-			return ErrAtomTextConstructType
-		}
-	case "", "text", "html":
-		{
-			var inner AtomPlainTextConstruct
-			inner.AtomCommonAttributes = t.AtomCommonAttributes
-			inner.Type = t.Type
-			inner.Text = t.Text
-			return e.EncodeElement(&inner, start)
-		}
-	case "xhtml":
-		{
-			var inner AtomXHTMLTextConstruct
-			inner.AtomCommonAttributes = t.AtomCommonAttributes
-			inner.Type = t.Type
-			inner.Div = t.Div
-			return e.EncodeElement(&inner, start)
-		}
-	}
-}
-
-func (t *AtomTextConstruct) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	for _, attr := range start.Attr {
-		switch attr.Name.Local {
-		case "type":
-			t.Type = attr.Value
-		}
-	}
-
-	switch t.Type {
-	default:
-		{
-			return ErrAtomTextConstructType
-		}
-	case "", "text", "html":
-		var inner AtomPlainTextConstruct
-		err := d.DecodeElement(&inner, &start)
-		if err != nil {
-			return err
-		}
-		t.Text = inner.Text
-		t.AtomCommonAttributes = inner.AtomCommonAttributes
-		return nil
-	case "xhtml":
-		{
-			var inner AtomXHTMLTextConstruct
-			err := d.DecodeElement(&inner, &start)
-			if err != nil {
-				return err
-			}
-			t.Div = inner.Div
-			t.AtomCommonAttributes = inner.AtomCommonAttributes
-			return err
-		}
-	}
 }
 
 // AtomPersonConstruct Person Construct
@@ -274,16 +153,16 @@ type AtomFeed struct {
 	Categories   []*AtomCategory        `xml:"category,omitempty"`
 	Contributors []*AtomPersonConstruct `xml:"contributor,omitempty"`
 	Generator    *AtomGenerator         `xml:"generator,omitempty"`
-	Icon         *AtomIcon              `xml:"icon,omitempty"`
-	ID           AtomId                 `xml:"id"`
+	Icon         *AtomUriExt            `xml:"icon,omitempty"`
+	ID           AtomUriExt             `xml:"id"`
 	Links        []*AtomLink            `xml:"link,omitempty"`
-	Logo         *AtomLogo              `xml:"logo,omitempty"`
+	Logo         *AtomUriExt            `xml:"logo,omitempty"`
 	Rights       *AtomTextConstruct     `xml:"rights,omitempty"`
 	Subtitle     *AtomTextConstruct     `xml:"subtitle,omitempty"`
 	Title        *AtomTextConstruct     `xml:"title"`
 	Updated      *AtomDateConstruct     `xml:"updated,omitempty"`
 
-	ExtensionElement []XmlGeneric `xml:",any"`
+	ExtensionElements []XmlGeneric `xml:",any"`
 
 	Entries []*AtomEntry `xml:"entry"`
 }
@@ -344,11 +223,11 @@ type UndefinedContent struct {
 //	   }
 type AtomCategory struct {
 	AtomCommonAttributes
-	Term   string  `xml:"term,attr"`
+	Term   string  `xml:"term,attr,omitempty"`
 	Scheme AtomUri `xml:"scheme,attr,omitempty"`
 	Label  string  `xml:"label,attr,omitempty"`
 
-	UndefinedContent []UndefinedContent `xml:",any,omitempty"`
+	//UndefinedContent []UndefinedContent `xml:",any,omitempty"`
 }
 
 // AtomGenerator The "atom:generator" element's content identifies the agent used to
@@ -367,38 +246,34 @@ type AtomGenerator struct {
 	Text    string  `xml:",chardata"`
 }
 
-// AtomIcon atom:icon
-//
-//	AtomIcon = element atom:icon {
-//	   AtomCommonAttributes,
-//	   (AtomUri)
-//	}
-type AtomIcon struct {
+type AtomUriExt struct {
 	AtomCommonAttributes
 	AtomUri `xml:",chardata"`
 }
 
-// AtomId atom:id
+//// AtomIcon atom:icon
+////
+////	AtomIcon = element atom:icon {
+////	   AtomCommonAttributes,
+////	   (AtomUri)
+////	}
+//type AtomIcon AtomUriExt
 //
-//	AtomId = element atom:id {
-//	   AtomCommonAttributes,
-//	   (AtomUri)
-//	}
-type AtomId struct {
-	AtomCommonAttributes
-	AtomUri `xml:",chardata"`
-}
-
-// AtomLogo atom:logo
+//// AtomId atom:id
+////
+////	AtomId = element atom:id {
+////	   AtomCommonAttributes,
+////	   (AtomUri)
+////	}
+//type AtomId AtomUriExt
 //
-//	AtomLogo = element atom:logo {
-//	   AtomCommonAttributes,
-//	   (AtomUri)
-//	}
-type AtomLogo struct {
-	AtomCommonAttributes
-	AtomUri `xml:",chardata"`
-}
+//// AtomLogo atom:logo
+////
+////	AtomLogo = element atom:logo {
+////	   AtomCommonAttributes,
+////	   (AtomUri)
+////	}
+//type AtomLogo AtomUriExt
 
 // AtomLink The "atom:link" element defines a reference from an entry or feed to
 //
@@ -425,7 +300,7 @@ type AtomLink struct {
 	Title    string          `xml:"title,attr,omitempty"`
 	Length   string          `xml:"length,attr,omitempty"`
 
-	UndefinedContent []UndefinedContent `xml:",any"`
+	//UndefinedContent []UndefinedContent `xml:",any"`
 }
 
 // AtomMediaType Whatever a media type is, it contains at least one slash
@@ -433,22 +308,8 @@ type AtomLink struct {
 //	AtomMediaType = xsd:string { pattern = ".+/.+" }
 type AtomMediaType string
 
-func (a *AtomMediaType) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	return xsdStringUnmarshalXML(d, start,
-		reflect.TypeOf(*a), (*string)(a),
-		"^.+/.+$", 0,
-		nil)
-}
-
 // AtomNCName AtomNCName = xsd:string { minLength = "1" pattern = "[^:]*" }
 type AtomNCName string
-
-func (a *AtomNCName) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	return xsdStringUnmarshalXML(d, start,
-		reflect.TypeOf(*a), (*string)(a),
-		"^[^:]*$", 1,
-		nil)
-}
 
 // AtomDateConstruct Date Construct
 //
@@ -509,7 +370,7 @@ type AtomEntry struct {
 	Categories   []*AtomCategory        `xml:"category,omitempty"`
 	Content      *AtomContent           `xml:"content,omitempty"`
 	Contributors []*AtomPersonConstruct `xml:"contributor,omitempty"`
-	ID           AtomId                 `xml:"id"`
+	ID           AtomUriExt             `xml:"id"`
 	Links        []*AtomLink            `xml:"link,omitempty"`
 	Published    *AtomDateConstruct     `xml:"published,omitempty"`
 	Rights       *AtomTextConstruct     `xml:"rights,omitempty"`
@@ -518,7 +379,7 @@ type AtomEntry struct {
 	Title        AtomTextConstruct      `xml:"title"`
 	Updated      *AtomDateConstruct     `xml:"updated,omitempty"`
 
-	ExtensionElement []XmlGeneric `xml:",any"`
+	ExtensionElements []XmlGeneric `xml:",any"`
 }
 
 // AtomSource atom:source
@@ -547,16 +408,16 @@ type AtomSource struct {
 	Categories   []*AtomCategory        `xml:"category,omitempty"`
 	Contributors []*AtomPersonConstruct `xml:"contributor,omitempty"`
 	Generator    *AtomGenerator         `xml:"generator,omitempty"`
-	Icon         *AtomIcon              `xml:"icon,omitempty"`
-	ID           AtomId                 `xml:"id"`
+	Icon         *AtomUriExt            `xml:"icon,omitempty"`
+	ID           AtomUriExt             `xml:"id"`
 	Links        []*AtomLink            `xml:"link,omitempty"`
-	Logo         *AtomLogo              `xml:"logo,omitempty"`
+	Logo         *AtomUriExt            `xml:"logo,omitempty"`
 	Rights       *AtomTextConstruct     `xml:"rights,omitempty"`
 	Subtitle     *AtomTextConstruct     `xml:"subtitle,omitempty"`
 	Title        *AtomTextConstruct     `xml:"title"`
 	Updated      *AtomDateConstruct     `xml:"updated,omitempty"`
 
-	ExtensionElement []XmlGeneric `xml:",any"`
+	ExtensionElements []XmlGeneric `xml:",any"`
 }
 
 // AtomContent atom:content

@@ -1,6 +1,9 @@
 package grss
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+	"github.com/hellodword/grss/pkg/etree"
+)
 
 // 0.90 https://www.rssboard.org/rss-0-9-0
 // 0.91(netscape) https://www.rssboard.org/rss-0-9-1-netscape
@@ -30,24 +33,17 @@ const (
 )
 
 type RssFeed struct {
-	Charset string `xml:"-"`
+	Inner *etree.Document `xml:"-"`
 
-	XMLName xml.Name // `xml:"rss"`
-
-	Attributes   []xml.Attr `xml:",any,attr,omitempty"`
-	Version      string     `xml:"version,attr,omitempty"`
-	XmlnsContent string     `xml:"xmlns:content,attr,omitempty"`
+	//Attributes   []xml.Attr `xml:",any,attr,omitempty"`
+	//Version string `xml:"version,attr,omitempty"`
+	//XmlnsContent string     `xml:"xmlns:content,attr,omitempty"`
 
 	Channel *RssChannel `xml:"channel,omitempty"`
-
-	// 0.90
-	Image     *RssImage     `xml:"image,omitempty"`
-	Items     []*RssItem    `xml:"item,omitempty"`
-	TextInput *RssTextInput `xml:"textinput,omitempty"`
 }
 
 type RssChannel struct {
-	Attributes []xml.Attr `xml:",any,attr,omitempty"`
+	//Attributes []xml.Attr `xml:",any,attr,omitempty"`
 
 	// the required channel elements, each with a brief description, an example, and where available, a pointer to a more complete description.
 

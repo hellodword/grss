@@ -158,7 +158,7 @@ type JSONAttachments struct {
 	DurationInSeconds uint64 `json:"duration_in_seconds,omitempty"`
 }
 
-func (j *JSONFeed) UnmarshalJSON(b []byte) error {
+func (f *JSONFeed) UnmarshalJSON(b []byte) error {
 	var m = map[string]interface{}{}
 	err := json.Unmarshal(b, &m)
 	if err != nil {
@@ -166,30 +166,30 @@ func (j *JSONFeed) UnmarshalJSON(b []byte) error {
 	}
 
 	type inner JSONFeed
-	err = json.Unmarshal(b, (*inner)(j))
+	err = json.Unmarshal(b, (*inner)(f))
 	if err != nil {
 		return err
 	}
 
-	j.Inner = m
-	j.Extensions = map[string]interface{}{}
+	f.Inner = m
+	f.Extensions = map[string]interface{}{}
 
 	for k, v := range m {
 		if len(k) >= 2 &&
 			k[0] == '_' &&
 			(('a' <= k[1] && k[1] <= 'z') || ('A' <= k[1] && k[1] <= 'Z')) {
-			j.Extensions[k] = v
+			f.Extensions[k] = v
 		}
 	}
 
 	switch items := m["items"].(type) {
 	case []interface{}:
 		{
-			if len(items) != len(j.Items) {
+			if len(items) != len(f.Items) {
 				break
 			}
-			for i := range j.Items {
-				j.Items[i].Extensions = map[string]interface{}{}
+			for i := range f.Items {
+				f.Items[i].Extensions = map[string]interface{}{}
 				switch item := items[i].(type) {
 				case map[string]interface{}:
 					{
@@ -197,7 +197,7 @@ func (j *JSONFeed) UnmarshalJSON(b []byte) error {
 							if len(k) >= 2 &&
 								k[0] == '_' &&
 								(('a' <= k[1] && k[1] <= 'z') || ('A' <= k[1] && k[1] <= 'Z')) {
-								j.Items[i].Extensions[k] = v
+								f.Items[i].Extensions[k[1:]] = v
 							}
 						}
 					}
@@ -207,8 +207,4 @@ func (j *JSONFeed) UnmarshalJSON(b []byte) error {
 	}
 
 	return nil
-}
-
-func (j *JSONFeed) MarshalJSON() ([]byte, error) {
-	return json.Marshal(j.Inner)
 }
