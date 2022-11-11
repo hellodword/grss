@@ -15,7 +15,6 @@ const (
 
 // JSONFeed JSONFeed
 type JSONFeed struct {
-	InnerMap map[string]interface{} `json:"-"`
 
 	// v1.0 https://www.jsonfeed.org/version/1/
 
@@ -53,7 +52,7 @@ type JSONFeed struct {
 	Expired *bool `json:"expired,omitempty"`
 
 	// Items is an array, and is required. An item includes:
-	Items []*JSONItem `json:"items"`
+	Items []*JSONItem `json:"items,omitempty"`
 
 	// Hub Subscribing to Real-time Notifications
 	Hub interface{} `json:"-"`
@@ -114,7 +113,7 @@ type JSONItem struct {
 	Tags []string `json:"tags,omitempty"`
 
 	// Attachments An individual item may have one or more attachments.
-	Attachments *[]JSONAttachments `json:"attachments,omitempty"`
+	Attachments []*JSONAttachments `json:"attachments,omitempty"`
 
 	// Extensions Publishers can use custom objects in JSON Feeds. Names must start with an _ character followed by a letter. Custom objects can appear anywhere in a feed.
 	Extensions map[string]interface{} `json:"-"`
@@ -158,7 +157,7 @@ type JSONAttachments struct {
 	DurationInSeconds uint64 `json:"duration_in_seconds,omitempty"`
 }
 
-func (j *JSONFeed) UnmarshalJSON(b []byte) error {
+func (f *JSONFeed) UnmarshalJSON(b []byte) error {
 	var m = map[string]interface{}{}
 	err := json.Unmarshal(b, &m)
 	if err != nil {
@@ -166,30 +165,29 @@ func (j *JSONFeed) UnmarshalJSON(b []byte) error {
 	}
 
 	type inner JSONFeed
-	err = json.Unmarshal(b, (*inner)(j))
+	err = json.Unmarshal(b, (*inner)(f))
 	if err != nil {
 		return err
 	}
 
-	j.InnerMap = m
-	j.Extensions = map[string]interface{}{}
+	f.Extensions = map[string]interface{}{}
 
 	for k, v := range m {
 		if len(k) >= 2 &&
 			k[0] == '_' &&
 			(('a' <= k[1] && k[1] <= 'z') || ('A' <= k[1] && k[1] <= 'Z')) {
-			j.Extensions[k] = v
+			f.Extensions[k] = v
 		}
 	}
 
 	switch items := m["items"].(type) {
 	case []interface{}:
 		{
-			if len(items) != len(j.Items) {
+			if len(items) != len(f.Items) {
 				break
 			}
-			for i := range j.Items {
-				j.Items[i].Extensions = map[string]interface{}{}
+			for i := range f.Items {
+				f.Items[i].Extensions = map[string]interface{}{}
 				switch item := items[i].(type) {
 				case map[string]interface{}:
 					{
@@ -197,7 +195,7 @@ func (j *JSONFeed) UnmarshalJSON(b []byte) error {
 							if len(k) >= 2 &&
 								k[0] == '_' &&
 								(('a' <= k[1] && k[1] <= 'z') || ('A' <= k[1] && k[1] <= 'Z')) {
-								j.Items[i].Extensions[k] = v
+								f.Items[i].Extensions[k] = v
 							}
 						}
 					}
@@ -207,8 +205,4 @@ func (j *JSONFeed) UnmarshalJSON(b []byte) error {
 	}
 
 	return nil
-}
-
-func (j *JSONFeed) MarshalJSON() ([]byte, error) {
-	return json.Marshal(j.InnerMap)
 }

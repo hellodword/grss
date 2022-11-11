@@ -1,6 +1,6 @@
 package grss
 
-import "encoding/xml"
+import "github.com/nbio/xml"
 
 // 0.90 https://www.rssboard.org/rss-0-9-0
 // 0.91(netscape) https://www.rssboard.org/rss-0-9-1-netscape
@@ -30,9 +30,7 @@ const (
 )
 
 type RssFeed struct {
-	Charset string `xml:"-"`
-
-	XMLName xml.Name // `xml:"rss"`
+	XMLName xml.Name
 
 	Attributes   []xml.Attr `xml:",any,attr,omitempty"`
 	Version      string     `xml:"version,attr,omitempty"`
@@ -52,11 +50,11 @@ type RssChannel struct {
 	// the required channel elements, each with a brief description, an example, and where available, a pointer to a more complete description.
 
 	// Title The name of the channel. It's how people refer to your service. If you have an HTML website that contains the same information as your RSS file, the title of your channel should be the same as the title of your website.
-	Title string `xml:"title"`
+	Title string `xml:"title,omitempty"`
 	// Link The URL to the HTML website corresponding to the channel.
-	Link string `xml:"link"`
+	Link string `xml:"link,omitempty"`
 	// Description	Phrase or sentence describing the channel.
-	Description string `xml:"description"`
+	Description string `xml:"description,omitempty"`
 
 	// optional channel elements.
 
@@ -72,8 +70,8 @@ type RssChannel struct {
 	PubDate string `xml:"pubDate,omitempty"`
 	// LastBuildDate The last time the content of the channel changed.
 	LastBuildDate string `xml:"lastBuildDate,omitempty"`
-	// Category Specify one or more categories that the channel belongs to. Follows the same rules as the <item>-level category element.
-	Category []*RssCategory `xml:"category,omitempty"`
+	// Categories Specify one or more categories that the channel belongs to. Follows the same rules as the <item>-level category element.
+	Categories []*RssCategory `xml:"category,omitempty"`
 	// Generator A string indicating the program used to generate the channel.
 	Generator string `xml:"generator,omitempty"`
 	// Docs A URL that points to the documentation for the format used in the RSS file. It's probably a pointer to this page. It's for people who might stumble across an RSS file on a Web server 25 years from now and wonder what it is.
@@ -107,8 +105,8 @@ type RssItem struct {
 	Description string `xml:"description,omitempty"`
 	// Email address of the author of the item.
 	Author *RssAuthor `xml:"author,omitempty"`
-	// Category Includes the item in one or more categories.
-	Category []*RssCategory `xml:"category,omitempty"`
+	// Categories Includes the item in one or more categories.
+	Categories []*RssCategory `xml:"category,omitempty"`
 	// Comments URL of a page for comments relating to the item.
 	Comments string `xml:"comments,omitempty"`
 	// Enclosure Describes a media object that is attached to the item.
@@ -120,8 +118,8 @@ type RssItem struct {
 	// Source The RSS channel that the item came from.
 	Source *RssSource `xml:"source,omitempty"`
 
-	ContentUnmarshal *RssContent `xml:"encoded,omitempty"`
-	Content          *RssContent `xml:"content:encoded,omitempty"`
+	Content        *RssContent `xml:"content,omitempty"`
+	ContentEncoded *RssContent `xml:"content:encoded,omitempty"`
 }
 
 type RssContent struct {

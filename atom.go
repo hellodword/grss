@@ -1,10 +1,9 @@
 package grss
 
 import (
-	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/hellodword/grss/common/slices"
+	"github.com/nbio/xml"
 	"reflect"
 	"regexp"
 )
@@ -26,9 +25,6 @@ const (
 var (
 	ErrXsdStringNotMatchingPattern   = errors.New("xsd:string not matching pattern")
 	ErrXsdStringNotMatchingMinLength = errors.New("xsd:string not matching minLength")
-	ErrXsdStringNotInDefaults        = errors.New("xsd:string not in defaults")
-
-	ErrAtomTextConstructType = errors.New(`atomTextConstruct type must in ["", "text", "html", "xhtml"]`)
 )
 
 // AtomUri Unconstrained; it's not entirely clear how IRI fit into
@@ -52,10 +48,18 @@ type AtomCommonAttributes struct {
 
 func xsdStringUnmarshalXML(d *xml.Decoder, start xml.StartElement,
 	t reflect.Type, s *string,
-	pattern string, minLength uint,
-	defaultValues []string) error {
+	pattern string, minLength uint) error {
 
-	err := d.DecodeElement(s, &start)
+	var err error
+	var r *regexp.Regexp
+	if pattern != "" {
+		r, err = regexp.Compile(pattern)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = d.DecodeElement(s, &start)
 	if err != nil {
 		return err
 	}
@@ -65,18 +69,8 @@ func xsdStringUnmarshalXML(d *xml.Decoder, start xml.StartElement,
 	}
 
 	if pattern != "" {
-		r, err := regexp.Compile(pattern)
-		if err != nil {
-			return err
-		}
 		if !r.Match([]byte(*s)) {
 			return fmt.Errorf("UnmarshalXML %s as %s: %w", start.Name.Local, t, ErrXsdStringNotMatchingPattern)
-		}
-	}
-
-	if len(defaultValues) > 0 {
-		if !slices.ContainsString(defaultValues, *s) {
-			return fmt.Errorf("UnmarshalXML %s as %s: %w", start.Name.Local, t, ErrXsdStringNotInDefaults)
 		}
 	}
 
@@ -93,8 +87,7 @@ type AtomLanguageTag string
 func (a *AtomLanguageTag) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	return xsdStringUnmarshalXML(d, start,
 		reflect.TypeOf(*a), (*string)(a),
-		"^([A-Za-z]{1,8}(-[A-Za-z0-9]{1,8})*)?$", 0,
-		nil)
+		"^([A-Za-z]{1,8}(-[A-Za-z0-9]{1,8})*)?$", 0)
 }
 
 // AtomEmailAddress Whatever an email address is, it contains at least one @
@@ -105,8 +98,7 @@ type AtomEmailAddress string
 func (a *AtomEmailAddress) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	return xsdStringUnmarshalXML(d, start,
 		reflect.TypeOf(*a), (*string)(a),
-		"^.+@.+$", 0,
-		nil)
+		"^.+@.+$", 0)
 }
 
 // AtomTextConstruct = AtomPlainTextConstruct | AtomXHTMLTextConstruct
@@ -117,27 +109,40 @@ type AtomTextConstruct struct {
 	Div  *AtomXhtmlDiv `xml:"div,omitempty"`
 }
 
-// AtomPlainTextConstruct =
-//
-//	AtomCommonAttributes,
-//	attribute type { "text" | "html" }?,
-//	text
-type AtomPlainTextConstruct struct {
-	AtomCommonAttributes
-	Type string `xml:"type,attr,omitempty"`
-	Text string `xml:",chardata"`
+func (a *AtomTextConstruct) String() string {
+	switch a.Type {
+	case "xhtml":
+		if a.Div != nil {
+			return string(a.Div.Text)
+		} else {
+			return ""
+		}
+	default:
+		return a.Text
+	}
 }
 
-// AtomXHTMLTextConstruct =
+//// AtomPlainTextConstruct =
+////
+////	AtomCommonAttributes,
+////	attribute type { "text" | "html" }?,
+////	text
+//type AtomPlainTextConstruct struct {
+//	AtomCommonAttributes
+//	Type string `xml:"type,attr,omitempty"`
+//	Text string `xml:",chardata"`
+//}
 //
-//	AtomCommonAttributes,
-//	attribute type { "xhtml" },
-//	AtomXhtmlDiv
-type AtomXHTMLTextConstruct struct {
-	AtomCommonAttributes
-	Type string        `xml:"type,attr,omitempty"`
-	Div  *AtomXhtmlDiv `xml:"div,omitempty"`
-}
+//// AtomXHTMLTextConstruct =
+////
+////	AtomCommonAttributes,
+////	attribute type { "xhtml" },
+////	AtomXhtmlDiv
+//type AtomXHTMLTextConstruct struct {
+//	AtomCommonAttributes
+//	Type string        `xml:"type,attr,omitempty"`
+//	Div  *AtomXhtmlDiv `xml:"div,omitempty"`
+//}
 
 //	AtomXhtmlDiv anyXHTML = element xhtml:* {
 //	     (attribute * { text }
@@ -156,66 +161,67 @@ type AtomXhtmlDiv struct {
 	Text []byte `xml:",innerxml"`
 }
 
-func (t *AtomTextConstruct) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	switch t.Type {
-	default:
-		{
-			return ErrAtomTextConstructType
-		}
-	case "", "text", "html":
-		{
-			var inner AtomPlainTextConstruct
-			inner.AtomCommonAttributes = t.AtomCommonAttributes
-			inner.Type = t.Type
-			inner.Text = t.Text
-			return e.EncodeElement(&inner, start)
-		}
-	case "xhtml":
-		{
-			var inner AtomXHTMLTextConstruct
-			inner.AtomCommonAttributes = t.AtomCommonAttributes
-			inner.Type = t.Type
-			inner.Div = t.Div
-			return e.EncodeElement(&inner, start)
-		}
-	}
-}
-
-func (t *AtomTextConstruct) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	for _, attr := range start.Attr {
-		switch attr.Name.Local {
-		case "type":
-			t.Type = attr.Value
-		}
-	}
-
-	switch t.Type {
-	default:
-		{
-			return ErrAtomTextConstructType
-		}
-	case "", "text", "html":
-		var inner AtomPlainTextConstruct
-		err := d.DecodeElement(&inner, &start)
-		if err != nil {
-			return err
-		}
-		t.Text = inner.Text
-		t.AtomCommonAttributes = inner.AtomCommonAttributes
-		return nil
-	case "xhtml":
-		{
-			var inner AtomXHTMLTextConstruct
-			err := d.DecodeElement(&inner, &start)
-			if err != nil {
-				return err
-			}
-			t.Div = inner.Div
-			t.AtomCommonAttributes = inner.AtomCommonAttributes
-			return err
-		}
-	}
-}
+//
+//func (t *AtomTextConstruct) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+//	switch t.Type {
+//	default:
+//		{
+//			return ErrAtomTextConstructType
+//		}
+//	case "", "text", "html":
+//		{
+//			var inner AtomPlainTextConstruct
+//			inner.AtomCommonAttributes = t.AtomCommonAttributes
+//			inner.Type = t.Type
+//			inner.Text = t.Text
+//			return e.EncodeElement(&inner, start)
+//		}
+//	case "xhtml":
+//		{
+//			var inner AtomXHTMLTextConstruct
+//			inner.AtomCommonAttributes = t.AtomCommonAttributes
+//			inner.Type = t.Type
+//			inner.Div = t.Div
+//			return e.EncodeElement(&inner, start)
+//		}
+//	}
+//}
+//
+//func (t *AtomTextConstruct) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+//	for _, attr := range start.Attr {
+//		switch attr.Name.Local {
+//		case "type":
+//			t.Type = attr.Value
+//		}
+//	}
+//
+//	switch t.Type {
+//	default:
+//		{
+//			return ErrAtomTextConstructType
+//		}
+//	case "", "text", "html":
+//		var inner AtomPlainTextConstruct
+//		err := d.DecodeElement(&inner, &start)
+//		if err != nil {
+//			return err
+//		}
+//		t.Text = inner.Text
+//		t.AtomCommonAttributes = inner.AtomCommonAttributes
+//		return nil
+//	case "xhtml":
+//		{
+//			var inner AtomXHTMLTextConstruct
+//			err := d.DecodeElement(&inner, &start)
+//			if err != nil {
+//				return err
+//			}
+//			t.Div = inner.Div
+//			t.AtomCommonAttributes = inner.AtomCommonAttributes
+//			return err
+//		}
+//	}
+//}
 
 // AtomPersonConstruct Person Construct
 //
@@ -263,28 +269,26 @@ type AtomPersonConstruct struct {
 //	      AtomEntry*
 //	   }
 type AtomFeed struct {
-	Charset string `xml:"-"`
-
-	XMLName xml.Name `xml:"feed"`
+	XMLName xml.Name
 
 	AtomCommonAttributes
 
-	Authors      []*AtomPersonConstruct `xml:"author"`
+	Authors      []*AtomPersonConstruct `xml:"author,omitempty"`
 	Categories   []*AtomCategory        `xml:"category,omitempty"`
 	Contributors []*AtomPersonConstruct `xml:"contributor,omitempty"`
 	Generator    *AtomGenerator         `xml:"generator,omitempty"`
 	Icon         *AtomIcon              `xml:"icon,omitempty"`
-	ID           AtomId                 `xml:"id"`
+	ID           *AtomId                `xml:"id,omitempty"`
 	Links        []*AtomLink            `xml:"link,omitempty"`
 	Logo         *AtomLogo              `xml:"logo,omitempty"`
 	Rights       *AtomTextConstruct     `xml:"rights,omitempty"`
 	Subtitle     *AtomTextConstruct     `xml:"subtitle,omitempty"`
-	Title        *AtomTextConstruct     `xml:"title"`
+	Title        *AtomTextConstruct     `xml:"title,omitempty"`
 	Updated      *AtomDateConstruct     `xml:"updated,omitempty"`
 
 	ExtensionElement []XmlGeneric `xml:",any"`
 
-	Entries []*AtomEntry `xml:"entry"`
+	Entries []*AtomEntry `xml:"entry,omitempty"`
 }
 
 // ExtensionElement = simpleExtensionElement | structuredExtensionElement
@@ -432,12 +436,11 @@ type AtomLink struct {
 //	AtomMediaType = xsd:string { pattern = ".+/.+" }
 type AtomMediaType string
 
-func (a *AtomMediaType) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	return xsdStringUnmarshalXML(d, start,
-		reflect.TypeOf(*a), (*string)(a),
-		"^.+/.+$", 0,
-		nil)
-}
+//func (a *AtomMediaType) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+//	return xsdStringUnmarshalXML(d, start,
+//		reflect.TypeOf(*a), (*string)(a),
+//		"^.+/.+$", 0)
+//}
 
 // AtomNCName AtomNCName = xsd:string { minLength = "1" pattern = "[^:]*" }
 type AtomNCName string
@@ -445,8 +448,7 @@ type AtomNCName string
 func (a *AtomNCName) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	return xsdStringUnmarshalXML(d, start,
 		reflect.TypeOf(*a), (*string)(a),
-		"^[^:]*$", 1,
-		nil)
+		"^[^:]*$", 1)
 }
 
 // AtomDateConstruct Date Construct
@@ -508,13 +510,13 @@ type AtomEntry struct {
 	Categories   []*AtomCategory        `xml:"category,omitempty"`
 	Content      *AtomContent           `xml:"content,omitempty"`
 	Contributors []*AtomPersonConstruct `xml:"contributor,omitempty"`
-	ID           AtomId                 `xml:"id"`
+	ID           *AtomId                `xml:"id,omitempty"`
 	Links        []*AtomLink            `xml:"link,omitempty"`
 	Published    *AtomDateConstruct     `xml:"published,omitempty"`
 	Rights       *AtomTextConstruct     `xml:"rights,omitempty"`
 	Source       *AtomSource            `xml:"source,omitempty"`
 	Summary      *AtomTextConstruct     `xml:"summary,omitempty"`
-	Title        AtomTextConstruct      `xml:"title"`
+	Title        *AtomTextConstruct     `xml:"title,omitempty"`
 	Updated      *AtomDateConstruct     `xml:"updated,omitempty"`
 
 	ExtensionElement []XmlGeneric `xml:",any"`
@@ -600,4 +602,21 @@ type AtomContent struct {
 	Text  string        `xml:",chardata"`
 	Div   *AtomXhtmlDiv `xml:"div,omitempty"`
 	Bytes []byte        `xml:",innerxml"`
+}
+
+func (a *AtomContent) String() string {
+	switch a.Type {
+	case "xhtml":
+		if a.Div != nil {
+			return string(a.Div.Text)
+		} else {
+			return ""
+		}
+	default:
+		if len(a.Bytes) == 0 {
+			return a.Text
+		} else {
+			return string(a.Bytes)
+		}
+	}
 }

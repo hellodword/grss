@@ -1,11 +1,26 @@
 package grss
 
 import (
-	"encoding/xml"
+	"github.com/nbio/xml"
 	"github.com/stretchr/testify/assert"
+	"io"
 	"strings"
 	"testing"
 )
+
+func atomParse(r io.Reader) (*AtomFeed, error) {
+	_, f, err := Parse(r)
+	if err != nil {
+		return nil, err
+	}
+
+	return f.ToAtom(), nil
+}
+
+func Test_xsd_RegexpCompileError(t *testing.T) {
+	err := xsdStringUnmarshalXML(nil, xml.StartElement{}, nil, nil, "^([", 0)
+	assert.Contains(t, err.Error(), "parsing")
+}
 
 func Test_AtomLanguageTag(t *testing.T) {
 	s := `<AtomLanguageTag>zh-CN</AtomLanguageTag>`
@@ -28,11 +43,25 @@ func Test_AtomEmailAddress(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func Test_AtomEmailAddress_Fail(t *testing.T) {
+	s := `<AtomEmailAddress>admin@exmaple.org</AtomEmailAddres>`
+	var a AtomEmailAddress
+	err := xml.Unmarshal([]byte(s), &a)
+	assert.Contains(t, err.Error(), "syntax")
+}
+
 func Test_AtomEmailAddress_XsdStringNotMatchingPattern(t *testing.T) {
 	s := `<AtomEmailAddress>admin#exmaple.org</AtomEmailAddress>`
 	var a AtomEmailAddress
 	err := xml.Unmarshal([]byte(s), &a)
 	assert.ErrorIs(t, err, ErrXsdStringNotMatchingPattern)
+}
+
+func Test_AtomNCName_ErrXsdStringNotMatchingMinLength(t *testing.T) {
+	s := `<AtomNCName></AtomNCName>`
+	var a AtomNCName
+	err := xml.Unmarshal([]byte(s), &a)
+	assert.ErrorIs(t, err, ErrXsdStringNotMatchingMinLength)
 }
 
 func Test_AtomTextConstruct_Text(t *testing.T) {
@@ -47,11 +76,11 @@ func Test_AtomTextConstruct_Text(t *testing.T) {
 	err := xml.Unmarshal([]byte(s), &a)
 	assert.Nil(t, err)
 
-	assert.EqualValues(t, a.Type, "text", a)
-	assert.EqualValues(t, a.Language, "en-us", a)
-	assert.EqualValues(t, a.Base, "http://title/base", a)
-	assert.EqualValues(t, a.UndefinedAttribute[0].Value, "http://www.w3.org/2005/Atom", a)
-	assert.EqualValues(t, a.Text, "title", a)
+	assert.EqualValues(t, "text", a.Type, a)
+	assert.EqualValues(t, "en-us", a.Language, a)
+	assert.EqualValues(t, "http://title/base", a.Base, a)
+	assert.EqualValues(t, "http://www.w3.org/2005/Atom", a.UndefinedAttribute[0].Value, a)
+	assert.EqualValues(t, "title", a.Text, a)
 
 }
 
@@ -67,11 +96,11 @@ func Test_AtomTextConstruct_HTML(t *testing.T) {
 	err := xml.Unmarshal([]byte(s), &a)
 	assert.Nil(t, err)
 
-	assert.EqualValues(t, a.Type, "html", a)
-	assert.EqualValues(t, a.Language, "en-us", a)
-	assert.EqualValues(t, a.Base, "http://title/base", a)
-	assert.EqualValues(t, a.UndefinedAttribute[0].Value, "http://www.w3.org/2005/Atom", a)
-	assert.EqualValues(t, a.Text, "<h1>title</h1>", a)
+	assert.EqualValues(t, "html", a.Type, a)
+	assert.EqualValues(t, "en-us", a.Language, a)
+	assert.EqualValues(t, "http://title/base", a.Base, a)
+	assert.EqualValues(t, "http://www.w3.org/2005/Atom", a.UndefinedAttribute[0].Value, a)
+	assert.EqualValues(t, "<h1>title</h1>", a.Text, a)
 
 }
 
@@ -93,11 +122,11 @@ func Test_AtomTextConstruct_XHTML(t *testing.T) {
 	err := xml.Unmarshal([]byte(s), &a)
 	assert.Nil(t, err)
 
-	assert.EqualValues(t, a.Type, "xhtml", a)
-	assert.EqualValues(t, a.Language, "en-us", a)
-	assert.EqualValues(t, a.Base, "http://title/base", a)
-	assert.EqualValues(t, a.Div.UndefinedAttribute[0].Value, "http://www.w3.org/1999/xhtml", a)
-	assert.EqualValues(t, string(a.Div.Text), "\n        <h1>title</h1>\n    ", a)
+	assert.EqualValues(t, "xhtml", a.Type, a)
+	assert.EqualValues(t, "en-us", a.Language, a)
+	assert.EqualValues(t, "http://title/base", a.Base, a)
+	assert.EqualValues(t, "http://www.w3.org/1999/xhtml", a.Div.UndefinedAttribute[0].Value, a)
+	assert.EqualValues(t, "\n        <h1>title</h1>\n    ", string(a.String()), a)
 
 }
 
@@ -119,11 +148,11 @@ func Test_AtomTextConstruct_XHTMLWithText(t *testing.T) {
 	err := xml.Unmarshal([]byte(s), &a)
 	assert.Nil(t, err)
 
-	assert.EqualValues(t, a.Type, "xhtml", a)
-	assert.EqualValues(t, a.Language, "en-us", a)
-	assert.EqualValues(t, a.Base, "http://title/base", a)
-	assert.EqualValues(t, a.Div.UndefinedAttribute[0].Value, "http://www.w3.org/1999/xhtml", a)
-	assert.EqualValues(t, string(a.Div.Text), "\n        title\n    ", a)
+	assert.EqualValues(t, "xhtml", a.Type, a)
+	assert.EqualValues(t, "en-us", a.Language, a)
+	assert.EqualValues(t, "http://title/base", a.Base, a)
+	assert.EqualValues(t, "http://www.w3.org/1999/xhtml", a.Div.UndefinedAttribute[0].Value, a)
+	assert.EqualValues(t, "\n        title\n    ", string(a.String()), a)
 
 }
 
@@ -148,11 +177,11 @@ func Test_AtomTextConstruct_XHTMLWithDiv(t *testing.T) {
 	err := xml.Unmarshal([]byte(s), &a)
 	assert.Nil(t, err)
 
-	assert.EqualValues(t, a.Type, "xhtml", a)
-	assert.EqualValues(t, a.Language, "en-us", a)
-	assert.EqualValues(t, a.Base, "http://title/base", a)
-	assert.EqualValues(t, a.Div.UndefinedAttribute[0].Value, "http://www.w3.org/1999/xhtml", a)
-	assert.EqualValues(t, string(a.Div.Text), "\n        <h1>\n            <div>title</div>\n        </h1>\n    ", a)
+	assert.EqualValues(t, "xhtml", a.Type, a)
+	assert.EqualValues(t, "en-us", a.Language, a)
+	assert.EqualValues(t, "http://title/base", a.Base, a)
+	assert.EqualValues(t, "http://www.w3.org/1999/xhtml", a.Div.UndefinedAttribute[0].Value, a)
+	assert.EqualValues(t, "\n        <h1>\n            <div>title</div>\n        </h1>\n    ", string(a.Div.Text), a)
 
 }
 
@@ -168,10 +197,10 @@ func Test_AtomContent_Text(t *testing.T) {
 	err := xml.Unmarshal([]byte(s), &a)
 	assert.Nil(t, err)
 
-	assert.EqualValues(t, a.Type, "text", a)
-	assert.EqualValues(t, a.Language, "en-us", a)
-	assert.EqualValues(t, a.Base, "http://title/base", a)
-	assert.EqualValues(t, a.Text, "title", a)
+	assert.EqualValues(t, "text", a.Type, a)
+	assert.EqualValues(t, "en-us", a.Language, a)
+	assert.EqualValues(t, "http://title/base", a.Base, a)
+	assert.EqualValues(t, "title", a.Text, a)
 
 }
 
@@ -188,11 +217,11 @@ func Test_AtomContent_HTML(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	assert.EqualValues(t, a.Type, "html", a)
-	assert.EqualValues(t, a.Language, "en-us", a)
-	assert.EqualValues(t, a.Base, "http://title/base", a)
-	assert.EqualValues(t, a.UndefinedAttribute[0].Value, "http://www.w3.org/2005/Atom", a)
-	assert.EqualValues(t, a.Text, "<h1>title</h1>", a)
+	assert.EqualValues(t, "html", a.Type, a)
+	assert.EqualValues(t, "en-us", a.Language, a)
+	assert.EqualValues(t, "http://title/base", a.Base, a)
+	assert.EqualValues(t, "http://www.w3.org/2005/Atom", a.UndefinedAttribute[0].Value, a)
+	assert.EqualValues(t, "<h1>title</h1>", a.Text, a)
 
 }
 
@@ -214,11 +243,11 @@ func Test_AtomContent_XHTML(t *testing.T) {
 	err := xml.Unmarshal([]byte(s), &a)
 	assert.Nil(t, err)
 
-	assert.EqualValues(t, a.Type, "xhtml", a)
-	assert.EqualValues(t, a.Language, "en-us", a)
-	assert.EqualValues(t, a.Base, "http://title/base", a)
-	assert.EqualValues(t, a.Div.UndefinedAttribute[0].Value, "http://www.w3.org/1999/xhtml", a)
-	assert.EqualValues(t, string(a.Div.Text), "\n        <h1>title</h1>\n    ", a)
+	assert.EqualValues(t, "xhtml", a.Type, a)
+	assert.EqualValues(t, "en-us", a.Language, a)
+	assert.EqualValues(t, "http://title/base", a.Base, a)
+	assert.EqualValues(t, "http://www.w3.org/1999/xhtml", a.Div.UndefinedAttribute[0].Value, a)
+	assert.EqualValues(t, "\n        <h1>title</h1>\n    ", string(a.Div.Text), a)
 
 }
 
@@ -241,11 +270,11 @@ func Test_AtomContent_XHTMLWithText(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	assert.EqualValues(t, a.Type, "xhtml", a)
-	assert.EqualValues(t, a.Language, "en-us", a)
-	assert.EqualValues(t, a.Base, "http://title/base", a)
-	assert.EqualValues(t, a.Div.UndefinedAttribute[0].Value, "http://www.w3.org/1999/xhtml", a)
-	assert.EqualValues(t, string(a.Div.Text), "\n        title\n    ", a)
+	assert.EqualValues(t, "xhtml", a.Type, a)
+	assert.EqualValues(t, "en-us", a.Language, a)
+	assert.EqualValues(t, "http://title/base", a.Base, a)
+	assert.EqualValues(t, "http://www.w3.org/1999/xhtml", a.Div.UndefinedAttribute[0].Value, a)
+	assert.EqualValues(t, "\n        title\n    ", string(a.Div.Text), a)
 }
 
 func Test_AtomContent_XML(t *testing.T) {
@@ -264,10 +293,10 @@ func Test_AtomContent_XML(t *testing.T) {
 	err := xml.Unmarshal([]byte(s), &a)
 	assert.Nil(t, err)
 
-	assert.EqualValues(t, a.Type, "application/xml", a)
-	assert.EqualValues(t, a.Language, "en-us", a)
-	assert.EqualValues(t, a.Base, "http://title/base", a)
-	assert.EqualValues(t, string(a.Bytes), "\n    <x xmlns=\"http://x/\">title</x>\n", a)
+	assert.EqualValues(t, "application/xml", a.Type, a)
+	assert.EqualValues(t, "en-us", a.Language, a)
+	assert.EqualValues(t, "http://title/base", a.Base, a)
+	assert.EqualValues(t, "\n    <x xmlns=\"http://x/\">title</x>\n", string(a.Bytes), a)
 }
 
 func Test_AtomEntry_001(t *testing.T) {
@@ -301,17 +330,17 @@ func Test_AtomEntry_001(t *testing.T) {
 	err := xml.Unmarshal([]byte(s), &a)
 	assert.Nil(t, err)
 
-	assert.EqualValues(t, a.Language, "en-us", a)
-	assert.EqualValues(t, a.UndefinedAttribute[0].Name.Local, "anyAttr", a)
-	assert.EqualValues(t, a.ID.AtomUri, "1", a)
-	assert.EqualValues(t, a.Updated.DateTime, "2022-11-08T20:48:11Z", a)
-	assert.EqualValues(t, a.Title.Text, "title", a)
-	assert.EqualValues(t, a.Summary.Text, "summary", a)
-	assert.EqualValues(t, a.Published.DateTime, "2022-11-07T22:54:20Z", a)
-	assert.EqualValues(t, a.Links[0].Href, "href", a)
-	assert.EqualValues(t, a.Authors[0].Email, "author@hp.com", a)
-	assert.EqualValues(t, a.Contributors[0].Uri, "http://uri", a)
-	assert.EqualValues(t, a.Categories[0].Term, "term", a)
+	assert.EqualValues(t, "en-us", a.Language, a)
+	assert.EqualValues(t, "anyAttr", a.UndefinedAttribute[0].Name.Local, a)
+	assert.EqualValues(t, "1", a.ID.AtomUri, a)
+	assert.EqualValues(t, "2022-11-08T20:48:11Z", a.Updated.DateTime, a)
+	assert.EqualValues(t, "title", a.Title.Text, a)
+	assert.EqualValues(t, "summary", a.Summary.Text, a)
+	assert.EqualValues(t, "2022-11-07T22:54:20Z", a.Published.DateTime, a)
+	assert.EqualValues(t, "href", a.Links[0].Href, a)
+	assert.EqualValues(t, "author@hp.com", a.Authors[0].Email, a)
+	assert.EqualValues(t, "http://uri", a.Contributors[0].Uri, a)
+	assert.EqualValues(t, "term", a.Categories[0].Term, a)
 
 }
 
@@ -347,19 +376,19 @@ func Test_AtomEntry_002(t *testing.T) {
 	err := xml.Unmarshal([]byte(s), &a)
 	assert.Nil(t, err)
 
-	assert.EqualValues(t, a.Language, "en-us", a)
-	assert.EqualValues(t, a.UndefinedAttribute[0].Value, "anyAttrValue", a)
-	assert.EqualValues(t, a.ID.AtomUri, "2", a)
-	assert.EqualValues(t, a.Updated.DateTime, "2022-11-08T20:48:11Z", a)
-	assert.EqualValues(t, a.Title.Text, "title", a)
-	assert.EqualValues(t, a.Summary.Text, "summary", a)
-	assert.EqualValues(t, a.Published.DateTime, "2022-11-07T22:54:20Z", a)
-	assert.EqualValues(t, a.Links[0].Href, "href", a)
-	assert.EqualValues(t, a.Authors[0].Email, "author@hp.com", a)
-	assert.EqualValues(t, a.Contributors[0].Uri, "http://uri", a)
-	assert.EqualValues(t, a.Categories[0].Term, "term", a)
-	assert.EqualValues(t, a.Content.Type, "text/plain", a)
-	assert.EqualValues(t, a.Content.Text, "Gustaf's Knäckebröd", a)
+	assert.EqualValues(t, "en-us", a.Language, a)
+	assert.EqualValues(t, "anyAttrValue", a.UndefinedAttribute[0].Value, a)
+	assert.EqualValues(t, "2", a.ID.AtomUri, a)
+	assert.EqualValues(t, "2022-11-08T20:48:11Z", a.Updated.DateTime, a)
+	assert.EqualValues(t, "title", a.Title.Text, a)
+	assert.EqualValues(t, "summary", a.Summary.Text, a)
+	assert.EqualValues(t, "2022-11-07T22:54:20Z", a.Published.DateTime, a)
+	assert.EqualValues(t, "href", a.Links[0].Href, a)
+	assert.EqualValues(t, "author@hp.com", a.Authors[0].Email, a)
+	assert.EqualValues(t, "http://uri", a.Contributors[0].Uri, a)
+	assert.EqualValues(t, "term", a.Categories[0].Term, a)
+	assert.EqualValues(t, "text/plain", a.Content.Type, a)
+	assert.EqualValues(t, "Gustaf's Knäckebröd", a.Content.String(), a)
 
 }
 
@@ -398,19 +427,19 @@ func Test_AtomEntry_003(t *testing.T) {
 	err := xml.Unmarshal([]byte(s), &a)
 	assert.Nil(t, err)
 
-	assert.EqualValues(t, a.Language, "en-us", a)
-	assert.EqualValues(t, a.UndefinedAttribute[1].Name.Local, "ns2", a)
-	assert.EqualValues(t, a.ID.AtomUri, "3", a)
-	assert.EqualValues(t, a.Updated.DateTime, "1970-01-01T02:20:34.567+02:00", a)
-	assert.EqualValues(t, a.Title.Text, "title", a)
-	assert.EqualValues(t, a.Summary.Text, "summary", a)
-	assert.EqualValues(t, a.Published.DateTime, "1970-01-01T02:20:34.567+02:00", a)
-	assert.EqualValues(t, a.Links[0].Href, "href", a)
-	assert.EqualValues(t, a.Authors[0].Email, "author@hp.com", a)
-	assert.EqualValues(t, a.Contributors[0].Uri, "http://uri", a)
-	assert.EqualValues(t, a.Categories[0].Term, "term", a)
-	assert.EqualValues(t, a.Content.Type, "application/xml", a)
-	assert.EqualValues(t, string(a.Content.Bytes), "\n        <x:x xmlns=\"http://x/\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns3=\"http://a9.com/-/spec/opensearch/1.1/\" xmlns:ns4=\"http://www.w3.org/1999/xhtml\" xmlns:x=\"http://x/\">Gustaf's Knäckebröd</x:x>\n    ", a.Content)
+	assert.EqualValues(t, "en-us", a.Language, a)
+	assert.EqualValues(t, "ns2", a.UndefinedAttribute[1].Name.Local, a)
+	assert.EqualValues(t, "3", a.ID.AtomUri, a)
+	assert.EqualValues(t, "1970-01-01T02:20:34.567+02:00", a.Updated.DateTime, a)
+	assert.EqualValues(t, "title", a.Title.Text, a)
+	assert.EqualValues(t, "summary", a.Summary.Text, a)
+	assert.EqualValues(t, "1970-01-01T02:20:34.567+02:00", a.Published.DateTime, a)
+	assert.EqualValues(t, "href", a.Links[0].Href, a)
+	assert.EqualValues(t, "author@hp.com", a.Authors[0].Email, a)
+	assert.EqualValues(t, "http://uri", a.Contributors[0].Uri, a)
+	assert.EqualValues(t, "term", a.Categories[0].Term, a)
+	assert.EqualValues(t, "application/xml", a.Content.Type, a)
+	assert.EqualValues(t, "\n        <x:x xmlns=\"http://x/\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns3=\"http://a9.com/-/spec/opensearch/1.1/\" xmlns:ns4=\"http://www.w3.org/1999/xhtml\" xmlns:x=\"http://x/\">Gustaf's Knäckebröd</x:x>\n    ", a.Content.String(), a.Content)
 
 }
 
@@ -467,26 +496,26 @@ func Test_AtomFeed_001(t *testing.T) {
 </feed>
 `
 
-	a, err := AtomParse(strings.NewReader(s))
+	a, err := atomParse(strings.NewReader(s))
 	assert.Nil(t, err)
 
-	assert.EqualValues(t, a.Language, "en-us", a)
-	assert.EqualValues(t, a.UndefinedAttribute[0].Name.Local, "anyAttr", a)
-	assert.EqualValues(t, a.ID.AtomUri, "id", a)
-	assert.EqualValues(t, a.Updated.DateTime, "2022-11-08T20:48:11Z", a)
-	assert.EqualValues(t, a.Title.Text, "title", a)
-	assert.EqualValues(t, a.Subtitle.Text, "subtitle", a)
-	assert.EqualValues(t, a.ExtensionElement[0].Content, "5", a.ExtensionElement)
-	assert.EqualValues(t, a.ExtensionElement[1].XMLName.Local, "opensearch:startIndex", a.ExtensionElement)
-	assert.EqualValues(t, a.Links[0].Href, "href", a)
-	assert.EqualValues(t, a.Authors[0].Email, "author@hp.com", a)
-	assert.EqualValues(t, a.Contributors[0].Uri, "http://uri", a)
-	assert.EqualValues(t, a.Categories[0].Term, "term", a)
-	assert.EqualValues(t, a.Icon.AtomUri, "icon", a)
-	assert.EqualValues(t, a.Logo.AtomUri, "logo", a)
-	assert.EqualValues(t, a.Rights.Text, "rights", a)
-	assert.EqualValues(t, a.Entries[0].Content.Type, "application/xml", a)
-	assert.EqualValues(t, string(a.Entries[0].Content.Bytes), "\n            <x:x xmlns=\"http://x/\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns3=\"http://a9.com/-/spec/opensearch/1.1/\" xmlns:ns4=\"http://www.w3.org/1999/xhtml\" xmlns:x=\"http://x/\">Gustaf's Knäckebröd</x:x>\n        ", a.Entries[0])
+	assert.EqualValues(t, "en-us", a.Language, a)
+	assert.EqualValues(t, "anyAttr", a.UndefinedAttribute[0].Name.Local, a)
+	assert.EqualValues(t, "id", a.ID.AtomUri, a)
+	assert.EqualValues(t, "2022-11-08T20:48:11Z", a.Updated.DateTime, a)
+	assert.EqualValues(t, "title", a.Title.Text, a)
+	assert.EqualValues(t, "subtitle", a.Subtitle.Text, a)
+	assert.EqualValues(t, "5", a.ExtensionElement[0].Content, a.ExtensionElement)
+	assert.EqualValues(t, "startIndex", a.ExtensionElement[1].XMLName.Local, a.ExtensionElement)
+	assert.EqualValues(t, "href", a.Links[0].Href, a)
+	assert.EqualValues(t, "author@hp.com", a.Authors[0].Email, a)
+	assert.EqualValues(t, "http://uri", a.Contributors[0].Uri, a)
+	assert.EqualValues(t, "term", a.Categories[0].Term, a)
+	assert.EqualValues(t, "icon", a.Icon.AtomUri, a)
+	assert.EqualValues(t, "logo", a.Logo.AtomUri, a)
+	assert.EqualValues(t, "rights", a.Rights.String(), a)
+	assert.EqualValues(t, "application/xml", a.Entries[0].Content.Type, a)
+	assert.EqualValues(t, "\n            <x:x xmlns=\"http://x/\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns3=\"http://a9.com/-/spec/opensearch/1.1/\" xmlns:ns4=\"http://www.w3.org/1999/xhtml\" xmlns:x=\"http://x/\">Gustaf's Knäckebröd</x:x>\n        ", a.Entries[0].Content.String(), a.Entries[0])
 
 }
 
@@ -542,24 +571,24 @@ func Test_AtomFeed_002(t *testing.T) {
 </feed>
 `
 
-	a, err := AtomParse(strings.NewReader(s))
+	a, err := atomParse(strings.NewReader(s))
 	assert.Nil(t, err)
 
-	assert.EqualValues(t, a.Language, "en-us", a)
-	assert.EqualValues(t, a.UndefinedAttribute[0].Name.Local, "anyAttr", a)
-	assert.EqualValues(t, a.ID.AtomUri, "id", a)
-	assert.EqualValues(t, a.Updated.DateTime, "2022-11-08T20:48:11Z", a)
-	assert.EqualValues(t, a.Title.Text, "title", a)
-	assert.EqualValues(t, a.Subtitle.Text, "subtitle", a)
-	assert.EqualValues(t, a.Links[0].Href, "href", a)
-	assert.EqualValues(t, a.Authors[0].Email, "author@hp.com", a)
-	assert.EqualValues(t, a.Contributors[0].Uri, "http://uri", a)
-	assert.EqualValues(t, a.Categories[0].Term, "term", a)
-	assert.EqualValues(t, a.Icon.AtomUri, "icon", a)
-	assert.EqualValues(t, a.Logo.AtomUri, "logo", a)
-	assert.EqualValues(t, a.Rights.Text, "rights", a)
-	assert.EqualValues(t, a.Entries[0].Content.Type, "application/xml", a)
-	assert.EqualValues(t, string(a.Entries[0].Content.Bytes), "\n            <x1 xmlns=\"xxx\" xmlns:y=\"yyy\">\n                <x2>\n                    <y:y1>Gustaf's Knäckebröd</y:y1>\n                </x2>\n            </x1>\n        ", a.Entries[0])
+	assert.EqualValues(t, "en-us", a.Language, a)
+	assert.EqualValues(t, "anyAttr", a.UndefinedAttribute[0].Name.Local, a)
+	assert.EqualValues(t, "id", a.ID.AtomUri, a)
+	assert.EqualValues(t, "2022-11-08T20:48:11Z", a.Updated.DateTime, a)
+	assert.EqualValues(t, "title", a.Title.Text, a)
+	assert.EqualValues(t, "subtitle", a.Subtitle.Text, a)
+	assert.EqualValues(t, "href", a.Links[0].Href, a)
+	assert.EqualValues(t, "author@hp.com", a.Authors[0].Email, a)
+	assert.EqualValues(t, "http://uri", a.Contributors[0].Uri, a)
+	assert.EqualValues(t, "term", a.Categories[0].Term, a)
+	assert.EqualValues(t, "icon", a.Icon.AtomUri, a)
+	assert.EqualValues(t, "logo", a.Logo.AtomUri, a)
+	assert.EqualValues(t, "rights", a.Rights.Text, a)
+	assert.EqualValues(t, "application/xml", a.Entries[0].Content.Type, a)
+	assert.EqualValues(t, "\n            <x1 xmlns=\"xxx\" xmlns:y=\"yyy\">\n                <x2>\n                    <y:y1>Gustaf's Knäckebröd</y:y1>\n                </x2>\n            </x1>\n        ", a.Entries[0].Content.String(), a.Entries[0])
 
 }
 
@@ -643,12 +672,12 @@ func Test_AtomFeed_003(t *testing.T) {
 </feed>
 `
 
-	a, err := AtomParse(strings.NewReader(s))
+	a, err := atomParse(strings.NewReader(s))
 	assert.Nil(t, err)
 
-	assert.EqualValues(t, a.Language, "en-US", a)
-	assert.EqualValues(t, a.UndefinedAttribute[1].Name.Local, "xmlns:media", a)
-	assert.EqualValues(t, a.Entries[0].ExtensionElement[0].XMLName.Local, "media:thumbnail", a)
+	assert.EqualValues(t, "en-US", a.Language, a)
+	assert.EqualValues(t, "media", a.UndefinedAttribute[1].Name.Local, a)
+	assert.EqualValues(t, "thumbnail", a.Entries[0].ExtensionElement[0].XMLName.Local, a)
 
 }
 
@@ -679,10 +708,10 @@ xmlns:g="http://base.google.com/ns/1.0">
 </feed>
 `
 
-	a, err := AtomParse(strings.NewReader(s))
+	a, err := atomParse(strings.NewReader(s))
 	assert.Nil(t, err)
 
-	assert.EqualValues(t, a.AtomCommonAttributes.UndefinedAttribute[0].Name.Local, "version", a)
-	assert.EqualValues(t, a.Links[0].Rel, "alternate", a)
-	assert.EqualValues(t, a.Entries[0].ExtensionElement[0].XMLName.Local, "issued", a.Entries[0].ExtensionElement)
+	assert.EqualValues(t, "version", a.AtomCommonAttributes.UndefinedAttribute[0].Name.Local, a)
+	assert.EqualValues(t, "alternate", a.Links[0].Rel, a)
+	assert.EqualValues(t, "issued", a.Entries[0].ExtensionElement[0].XMLName.Local, a.Entries[0].ExtensionElement)
 }

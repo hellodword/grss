@@ -2,9 +2,19 @@ package grss
 
 import (
 	"github.com/stretchr/testify/assert"
+	"io"
 	"strings"
 	"testing"
 )
+
+func rssParse(r io.Reader) (*RssFeed, error) {
+	_, f, err := Parse(r)
+	if err != nil {
+		return nil, err
+	}
+
+	return f.ToRss(), nil
+}
 
 func Test_RssFeed_001(t *testing.T) {
 	// RSS 0.90
@@ -56,11 +66,11 @@ xmlns="http://channel.netscape.com/rdf/simple/0.9/">
 </rdf:RDF>
 `
 
-	a, err := RssParse(strings.NewReader(s))
+	a, err := rssParse(strings.NewReader(s))
 	assert.Nil(t, err)
 
-	assert.Equal(t, a.XMLName.Local, "rdf:RDF", a)
-	assert.Equal(t, a.Attributes[0].Name.Local, "xmlns:rdf", a)
+	assert.Equal(t, "RDF", a.XMLName.Local, a)
+	assert.Equal(t, "rdf", a.Attributes[0].Name.Local, a)
 
 }
 
@@ -85,13 +95,13 @@ func Test_RssFeed_002(t *testing.T) {
 </rss>
 `
 
-	a, err := RssParse(strings.NewReader(s))
+	a, err := rssParse(strings.NewReader(s))
 	assert.Nil(t, err)
 
-	assert.Equal(t, a.XMLName.Local, "rss", a)
-	assert.Equal(t, a.Version, "0.91", a)
-	assert.Equal(t, a.Channel.Language, "en", a)
-	assert.Equal(t, a.Channel.Image.Title, "Scripting News", a)
+	assert.Equal(t, "rss", a.XMLName.Local, a)
+	assert.Equal(t, "0.91", a.Version, a)
+	assert.Equal(t, "en", a.Channel.Language, a)
+	assert.Equal(t, "Scripting News", a.Channel.Image.Title, a)
 
 }
 
@@ -148,19 +158,19 @@ func Test_RssFeed_003(t *testing.T) {
 </rss>
 `
 
-	a, err := RssParse(strings.NewReader(s))
+	a, err := rssParse(strings.NewReader(s))
 	assert.Nil(t, err)
 
-	assert.Equal(t, a.XMLName.Local, "rss", a)
-	assert.Equal(t, a.Version, "0.91", a)
+	assert.Equal(t, "rss", a.XMLName.Local, a)
+	assert.Equal(t, "0.91", a.Version, a)
 	assert.Equal(t, a.Channel.Copyright, "Copyright 1997-1999 UserLand Software, Inc.", a)
-	assert.Equal(t, a.Channel.Image.Height, "40", a)
-	assert.Equal(t, a.Channel.Image.Description, "What is this used for?", a)
-	assert.Equal(t, a.Channel.SkipHours.Hours[5], "11", a)
-	assert.Equal(t, a.Channel.SkipDays.Days[0], "Sunday", a)
-	assert.Equal(t, string(a.Channel.Rating.Content), "(PICS-1.1 \"http://www.rsac.org/ratingsv01.html\" l gen true comment \"RSACi North America Server\" for \"http://www.rsac.org\" on \"1996.04.16T08:15-0500\" r (n 0 s 0 v 0 l 0))", a)
-	assert.Equal(t, a.Channel.Items[0].Link, "http://bar", a)
-	assert.Equal(t, a.Channel.TextInput.Title, "Search Now!", a)
+	assert.Equal(t, "40", a.Channel.Image.Height, a)
+	assert.Equal(t, "What is this used for?", a.Channel.Image.Description, a)
+	assert.Equal(t, "11", a.Channel.SkipHours.Hours[5], a)
+	assert.Equal(t, "Sunday", a.Channel.SkipDays.Days[0], a)
+	assert.Equal(t, "(PICS-1.1 \"http://www.rsac.org/ratingsv01.html\" l gen true comment \"RSACi North America Server\" for \"http://www.rsac.org\" on \"1996.04.16T08:15-0500\" r (n 0 s 0 v 0 l 0))", string(a.Channel.Rating.Content), a)
+	assert.Equal(t, "http://bar", a.Channel.Items[0].Link, a)
+	assert.Equal(t, "Search Now!", a.Channel.TextInput.Title, a)
 
 }
 
@@ -206,14 +216,13 @@ func Test_RssFeed_004(t *testing.T) {
 </rss>
 `
 
-	a, err := RssParse(strings.NewReader(s))
+	a, err := rssParse(strings.NewReader(s))
 	assert.Nil(t, err)
 
-	assert.Equal(t, a.Charset, "EuC-JP", a)
-	assert.Equal(t, a.XMLName.Local, "rss", a)
-	assert.Equal(t, a.Version, "0.91", a)
-	assert.Equal(t, a.Channel.Language, "ja", a)
-	assert.Equal(t, a.Channel.Items[3].Link, "http://www.mozilla.org/status/", a)
+	assert.Equal(t, "rss", a.XMLName.Local, a)
+	assert.Equal(t, "0.91", a.Version, a)
+	assert.Equal(t, "ja", a.Channel.Language, a)
+	assert.Equal(t, "http://www.mozilla.org/status/", a.Channel.Items[3].Link, a)
 
 }
 
@@ -275,13 +284,12 @@ func Test_RssFeed_005(t *testing.T) {
 
 `
 
-	a, err := RssParse(strings.NewReader(s))
+	a, err := rssParse(strings.NewReader(s))
 	assert.Nil(t, err)
 
-	assert.Equal(t, a.Charset, "ISO-8859-1", a)
-	assert.Equal(t, a.XMLName.Local, "rss", a)
-	assert.Equal(t, a.Version, "0.91", a)
-	assert.Equal(t, len(a.Channel.Items), 6, a)
+	assert.Equal(t, "rss", a.XMLName.Local, a)
+	assert.Equal(t, "0.91", a.Version, a)
+	assert.Equal(t, 6, len(a.Channel.Items), a)
 
 }
 
@@ -394,21 +402,21 @@ The lyrics are &lt;a href=&quot;http://www.cs.cmu.edu/~mleone/gdead/dead-lyrics/
 	</rss>
 `
 
-	a, err := RssParse(strings.NewReader(s))
+	a, err := rssParse(strings.NewReader(s))
 	assert.Nil(t, err)
 
-	assert.Equal(t, a.XMLName.Local, "rss", a)
-	assert.Equal(t, a.Version, "0.92", a)
-	assert.Equal(t, a.Channel.Title, "Dave Winer: Grateful Dead", a.Channel)
-	assert.Equal(t, a.Channel.Link, "http://www.scripting.com/blog/categories/gratefulDead.html", a.Channel)
-	assert.Equal(t, a.Channel.Description, "A high-fidelity Grateful Dead song every day. This is where we're experimenting with enclosures on RSS news items that download when you're not using your computer. If it works (it will) it will be the end of the Click-And-Wait multimedia experience on the Internet. ", a.Channel)
-	assert.Equal(t, a.Channel.Cloud.Attributes[0].Value, "data.ourfavoritesongs.com", a.Channel.Cloud)
-	assert.Equal(t, a.Channel.Cloud.Attributes[4].Name.Local, "protocol", a.Channel.Cloud)
-	assert.Equal(t, len(a.Channel.Items), 22, a.Channel.Items)
-	assert.Equal(t, a.Channel.Items[0].Enclosure.Type, "audio/mpeg", a.Channel.Items[0].Enclosure)
-	assert.Equal(t, a.Channel.Items[1].Source.Url, "http://scriptingnews.userland.com/xml/scriptingNews2.xml", a.Channel.Items[1].Source)
-	assert.Equal(t, a.Channel.Items[1].Source.Text, "Scripting News", a.Channel.Items[1].Source)
-	assert.Equal(t, a.Channel.Items[21].Enclosure.Length, "5272510", a.Channel.Items[21].Enclosure)
+	assert.Equal(t, "rss", a.XMLName.Local, a)
+	assert.Equal(t, "0.92", a.Version, a)
+	assert.Equal(t, "Dave Winer: Grateful Dead", a.Channel.Title, a.Channel)
+	assert.Equal(t, "http://www.scripting.com/blog/categories/gratefulDead.html", a.Channel.Link, a.Channel)
+	assert.Equal(t, "A high-fidelity Grateful Dead song every day. This is where we're experimenting with enclosures on RSS news items that download when you're not using your computer. If it works (it will) it will be the end of the Click-And-Wait multimedia experience on the Internet. ", a.Channel.Description, a.Channel)
+	assert.Equal(t, "data.ourfavoritesongs.com", a.Channel.Cloud.Attributes[0].Value, a.Channel.Cloud)
+	assert.Equal(t, "protocol", a.Channel.Cloud.Attributes[4].Name.Local, a.Channel.Cloud)
+	assert.Equal(t, 22, len(a.Channel.Items), a.Channel.Items)
+	assert.Equal(t, "audio/mpeg", a.Channel.Items[0].Enclosure.Type, a.Channel.Items[0].Enclosure)
+	assert.Equal(t, "http://scriptingnews.userland.com/xml/scriptingNews2.xml", a.Channel.Items[1].Source.Url, a.Channel.Items[1].Source)
+	assert.Equal(t, "Scripting News", a.Channel.Items[1].Source.Text, a.Channel.Items[1].Source)
+	assert.Equal(t, "5272510", a.Channel.Items[21].Enclosure.Length, a.Channel.Items[21].Enclosure)
 
 }
 
@@ -503,17 +511,17 @@ func Test_RssFeed_007(t *testing.T) {
 
 `
 
-	a, err := RssParse(strings.NewReader(s))
+	a, err := rssParse(strings.NewReader(s))
 	assert.Nil(t, err)
 
-	assert.Equal(t, a.XMLName.Local, "rss", a)
-	assert.Equal(t, a.Version, "2.0", a)
-	assert.Equal(t, a.Attributes[0].Name.Local, "xmlns:blogChannel", a)
-	assert.Equal(t, a.Channel.ExtensionElement[2].XMLName.Local, "blogChannel:blink", a.Channel.ExtensionElement)
-	assert.Equal(t, a.Channel.Ttl, "40", a.Channel)
-	assert.Equal(t, len(a.Channel.Items), 9, a.Channel)
-	assert.Equal(t, a.Channel.Items[8].Guid.Guid, "http://scriptingnews.userland.com/backissues/2002/09/29#reallyEarlyMorningNocoffeeNotes", a.Channel)
-	assert.Equal(t, a.Channel.Items[8].PubDate, "Sun, 29 Sep 2002 11:13:10 GMT", a.Channel)
+	assert.Equal(t, "rss", a.XMLName.Local, a)
+	assert.Equal(t, "2.0", a.Version, a)
+	assert.Equal(t, "blogChannel", a.Attributes[0].Name.Local, a)
+	assert.Equal(t, "blink", a.Channel.ExtensionElement[2].XMLName.Local, a.Channel.ExtensionElement)
+	assert.Equal(t, "40", a.Channel.Ttl, a.Channel)
+	assert.Equal(t, 9, len(a.Channel.Items), a.Channel)
+	assert.Equal(t, "http://scriptingnews.userland.com/backissues/2002/09/29#reallyEarlyMorningNocoffeeNotes", a.Channel.Items[8].Guid.Guid, a.Channel)
+	assert.Equal(t, "Sun, 29 Sep 2002 11:13:10 GMT", a.Channel.Items[8].PubDate, a.Channel)
 
 }
 
@@ -544,14 +552,14 @@ func Test_RssFeed_008(t *testing.T) {
 </rss>
 `
 
-	a, err := RssParse(strings.NewReader(s))
+	a, err := rssParse(strings.NewReader(s))
 	assert.Nil(t, err)
 
-	assert.Equal(t, a.XMLName.Local, "rss", a)
-	assert.Equal(t, a.Version, "2.0", a)
-	assert.Equal(t, a.Channel.Items[0].Title, "喔喔喔", a)
-	assert.Equal(t, a.Channel.Items[0].Content.XMLName.Local, "content:encoded", a.Channel.Items[0].Content)
-	assert.Equal(t, string(a.Channel.Items[0].Content.Content), "&lt;section&gt;  &lt;article&gt;&lt;h3&gt;喔喔喔喔喔喔喔喔喔喔喔喔期&lt;/h3&gt;&lt;p&gt;喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔12月6喔喔喔喔喔喔喔喔。&lt;/p&gt;&lt;p&gt;&lt;a href=\"https://www.example.com/politics/2022/11/09/example-news-live-updates/#link-example\"&gt;喔喔喔喔喔&lt;/a&gt;喔喔喔喔喔喔喔喔喔喔去40喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔1986喔喔喔喔喔喔&lt;/p&gt;&lt;p&gt;喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔。&lt;/p&gt;&lt;p&gt;喔&lt;a href=\"https://www.example.com/example/2022/results/example?example-data-id=2022-SG&gt;", a.Channel.Items[0].Content)
+	assert.Equal(t, "rss", a.XMLName.Local, a)
+	assert.Equal(t, "2.0", a.Version, a)
+	assert.Equal(t, "喔喔喔", a.Channel.Items[0].Title, a)
+	assert.Equal(t, "encoded", a.Channel.Items[0].ContentEncoded.XMLName.Local, a.Channel.Items[0].ContentEncoded)
+	assert.Equal(t, "&lt;section&gt;  &lt;article&gt;&lt;h3&gt;喔喔喔喔喔喔喔喔喔喔喔喔期&lt;/h3&gt;&lt;p&gt;喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔12月6喔喔喔喔喔喔喔喔。&lt;/p&gt;&lt;p&gt;&lt;a href=\"https://www.example.com/politics/2022/11/09/example-news-live-updates/#link-example\"&gt;喔喔喔喔喔&lt;/a&gt;喔喔喔喔喔喔喔喔喔喔去40喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔1986喔喔喔喔喔喔&lt;/p&gt;&lt;p&gt;喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔。&lt;/p&gt;&lt;p&gt;喔&lt;a href=\"https://www.example.com/example/2022/results/example?example-data-id=2022-SG&gt;", string(a.Channel.Items[0].ContentEncoded.Content), a.Channel.Items[0].ContentEncoded)
 
 }
 
@@ -611,12 +619,11 @@ func Test_RssFeed_009(t *testing.T) {
 	</rss>
 `
 
-	a, err := RssParse(strings.NewReader(s))
+	a, err := rssParse(strings.NewReader(s))
 	assert.Nil(t, err)
 
-	assert.Equal(t, a.XMLName.Local, "rss", a)
-	assert.Equal(t, a.Version, "0.91", a)
-	assert.Equal(t, a.Charset, "ISO-8859-1", a)
+	assert.Equal(t, "rss", a.XMLName.Local, a)
+	assert.Equal(t, "0.91", a.Version, a)
 
 }
 
@@ -827,10 +834,12 @@ func Test_RssFeed_010(t *testing.T) {
 </rss>
 `
 
-	a, err := RssParse(strings.NewReader(s))
+	a, err := rssParse(strings.NewReader(s))
 	assert.Nil(t, err)
 
-	assert.Equal(t, a.XMLName.Local, "rss", a)
-	assert.Equal(t, a.Version, "2.0", a)
+	assert.Equal(t, "rss", a.XMLName.Local, a)
+	assert.Equal(t, "2.0", a.Version, a)
+
+	// TODO itunes
 
 }

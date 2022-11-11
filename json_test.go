@@ -1,10 +1,20 @@
 package grss
 
 import (
-	"encoding/json"
 	"github.com/stretchr/testify/assert"
+	"io"
+	"strings"
 	"testing"
 )
+
+func jsonParse(r io.Reader) (*JSONFeed, error) {
+	_, f, err := Parse(r)
+	if err != nil {
+		return nil, err
+	}
+
+	return f.ToJSON(), nil
+}
 
 func Test_JSONFeed_001(t *testing.T) {
 	s := `
@@ -41,15 +51,14 @@ func Test_JSONFeed_001(t *testing.T) {
   ]
 }
 `
-	a := &JSONFeed{}
-	err := json.Unmarshal([]byte(s), a)
+	a, err := jsonParse(strings.NewReader(s))
 	assert.Nil(t, err)
 
-	assert.Equal(t, a.Items[1].Title, "Announcing JSON Feed", a)
+	assert.Equal(t, "Announcing JSON Feed", a.Items[1].Title, a)
 
-	assert.Equal(t, a.Extensions["_aa"].(map[string]interface{})["aa"], float64(1), a)
-	assert.Equal(t, a.Items[1].Extensions["_bb"].(map[string]interface{})["bb"], float64(2), a)
-	assert.Equal(t, a.Items[1].Extensions["_blue_shed"].(map[string]interface{})["copyright"], "1948 by George Orwell", a)
-	assert.Equal(t, a.Items[1].Extensions["_blue_shed"].(map[string]interface{})["explicit"], false, a)
+	assert.Equal(t, float64(1), a.Extensions["_aa"].(map[string]interface{})["aa"], a)
+	assert.Equal(t, float64(2), a.Items[1].Extensions["_bb"].(map[string]interface{})["bb"], a)
+	assert.Equal(t, "1948 by George Orwell", a.Items[1].Extensions["_blue_shed"].(map[string]interface{})["copyright"], a)
+	assert.Equal(t, false, a.Items[1].Extensions["_blue_shed"].(map[string]interface{})["explicit"], a)
 
 }
