@@ -756,10 +756,10 @@ func (f *RssFeed) ToAtom() *AtomFeed {
 		if item.ContentEncoded != nil {
 			entry.Content = &AtomContent{
 				AtomCommonAttributes: AtomCommonAttributes{},
-				Type:                 "html",
+				Type:                 "",
 				Src:                  nil,
 				Div:                  nil,
-				Bytes:                item.ContentEncoded.Content,
+				Bytes:                []byte(html.EscapeString(html.UnescapeString(string(item.ContentEncoded.Content)))),
 			}
 		} else if item.Content != nil {
 			entry.Content = &AtomContent{
@@ -805,7 +805,7 @@ func (f *RssFeed) ToAtom() *AtomFeed {
 			}
 		}
 
-		if item.Description != "" {
+		if entry.Content == nil && item.Description != "" {
 			entry.Summary = &AtomTextConstruct{
 				AtomCommonAttributes: AtomCommonAttributes{},
 				Type:                 "",
