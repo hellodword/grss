@@ -7,10 +7,19 @@ import (
 )
 
 type Feed interface {
+	Mime(fallback bool) string
 	ToJSON() *JSONFeed
 	ToRss() *RssFeed
 	ToAtom() *AtomFeed
 	WriteOut(w io.Writer) error
+}
+
+func (f *JSONFeed) Mime(fallback bool) string {
+	if fallback {
+		return JSONMimeFallback
+	} else {
+		return JSONMime
+	}
 }
 
 func (f *JSONFeed) ToJSON() *JSONFeed {
@@ -367,6 +376,14 @@ func (f *JSONFeed) WriteOut(w io.Writer) error {
 	e.SetEscapeHTML(true)
 	e.SetIndent("", "    ")
 	return e.Encode(f)
+}
+
+func (f *RssFeed) Mime(fallback bool) string {
+	if fallback {
+		return RssMimeFallback
+	} else {
+		return RssMime
+	}
 }
 
 func (f *RssFeed) ToJSON() *JSONFeed {
@@ -762,6 +779,14 @@ func (f *RssFeed) WriteOut(w io.Writer) error {
 	e := xml.NewEncoder(w)
 	e.Indent("", "    ")
 	return e.Encode(f)
+}
+
+func (f *AtomFeed) Mime(fallback bool) string {
+	if fallback {
+		return AtomMimeFallback
+	} else {
+		return AtomMime
+	}
 }
 
 func (f *AtomFeed) ToJSON() *JSONFeed {
