@@ -340,9 +340,9 @@ func (f *JSONFeed) ToAtom() *AtomFeed {
 				AtomCommonAttributes: AtomCommonAttributes{},
 				Type:                 "",
 				Src:                  nil,
-				Text:                 item.ContentText,
-				Div:                  nil,
-				Bytes:                nil,
+				//Text:                 item.ContentText,
+				Div:   nil,
+				Bytes: []byte(item.ContentText),
 			}
 		}
 
@@ -351,8 +351,7 @@ func (f *JSONFeed) ToAtom() *AtomFeed {
 				AtomCommonAttributes: AtomCommonAttributes{},
 				Type:                 "html",
 				Src:                  nil,
-				Text:                 item.ContentHTML,
-				Bytes:                nil,
+				Bytes:                []byte(html.EscapeString(html.UnescapeString(item.ContentHTML))),
 			}
 		}
 
@@ -759,18 +758,16 @@ func (f *RssFeed) ToAtom() *AtomFeed {
 				AtomCommonAttributes: AtomCommonAttributes{},
 				Type:                 "html",
 				Src:                  nil,
-				Text:                 string(item.ContentEncoded.Content),
 				Div:                  nil,
-				Bytes:                nil,
+				Bytes:                item.ContentEncoded.Content,
 			}
 		} else if item.Content != nil {
 			entry.Content = &AtomContent{
 				AtomCommonAttributes: AtomCommonAttributes{},
 				Type:                 "",
 				Src:                  nil,
-				Text:                 string(item.Content.Content),
 				Div:                  nil,
-				Bytes:                nil,
+				Bytes:                []byte(html.EscapeString(html.UnescapeString(string(item.Content.Content)))),
 			}
 		}
 

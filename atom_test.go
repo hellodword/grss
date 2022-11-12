@@ -200,7 +200,7 @@ func Test_AtomContent_Text(t *testing.T) {
 	assert.EqualValues(t, "text", a.Type, a)
 	assert.EqualValues(t, "en-us", a.Language, a)
 	assert.EqualValues(t, "http://title/base", a.Base, a)
-	assert.EqualValues(t, "title", a.Text, a)
+	assert.EqualValues(t, "title", a.String(), a)
 
 }
 
@@ -221,7 +221,7 @@ func Test_AtomContent_HTML(t *testing.T) {
 	assert.EqualValues(t, "en-us", a.Language, a)
 	assert.EqualValues(t, "http://title/base", a.Base, a)
 	assert.EqualValues(t, "http://www.w3.org/2005/Atom", a.UndefinedAttribute[0].Value, a)
-	assert.EqualValues(t, "<h1>title</h1>", a.Text, a)
+	assert.EqualValues(t, "&lt;h1&gt;title&lt;/h1&gt;", a.String(), a)
 
 }
 

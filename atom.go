@@ -597,9 +597,9 @@ type AtomSource struct {
 //		 | atomOutOfLineContent
 type AtomContent struct {
 	AtomCommonAttributes
-	Type  string        `xml:"type,attr,omitempty"`
-	Src   *AtomUri      `xml:"src,attr,omitempty"`
-	Text  string        `xml:",chardata"`
+	Type string   `xml:"type,attr,omitempty"`
+	Src  *AtomUri `xml:"src,attr,omitempty"`
+	//Text  string        `xml:",chardata"`
 	Div   *AtomXhtmlDiv `xml:"div,omitempty"`
 	Bytes []byte        `xml:",innerxml"`
 }
@@ -613,10 +613,6 @@ func (a *AtomContent) String() string {
 			return ""
 		}
 	default:
-		if len(a.Bytes) == 0 {
-			return a.Text
-		} else {
-			return string(a.Bytes)
-		}
+		return string(a.Bytes)
 	}
 }
