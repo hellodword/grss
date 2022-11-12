@@ -69,8 +69,7 @@ xmlns="http://channel.netscape.com/rdf/simple/0.9/">
 	a, err := rssParse(strings.NewReader(s))
 	assert.Nil(t, err)
 
-	assert.Equal(t, "RDF", a.XMLName.Local, a)
-	assert.Equal(t, "rdf", a.Attributes[0].Name.Local, a)
+	assert.Equal(t, "rss", a.XMLName.Local, a)
 
 }
 
@@ -99,7 +98,7 @@ func Test_RssFeed_002(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, "rss", a.XMLName.Local, a)
-	assert.Equal(t, "0.91", a.Version, a)
+	assert.Equal(t, "2.0", a.Version, a)
 	assert.Equal(t, "en", a.Channel.Language, a)
 	assert.Equal(t, "Scripting News", a.Channel.Image.Title, a)
 
@@ -162,7 +161,7 @@ func Test_RssFeed_003(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, "rss", a.XMLName.Local, a)
-	assert.Equal(t, "0.91", a.Version, a)
+	assert.Equal(t, "2.0", a.Version, a)
 	assert.Equal(t, a.Channel.Copyright, "Copyright 1997-1999 UserLand Software, Inc.", a)
 	assert.Equal(t, "40", a.Channel.Image.Height, a)
 	assert.Equal(t, "What is this used for?", a.Channel.Image.Description, a)
@@ -220,7 +219,7 @@ func Test_RssFeed_004(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, "rss", a.XMLName.Local, a)
-	assert.Equal(t, "0.91", a.Version, a)
+	assert.Equal(t, "2.0", a.Version, a)
 	assert.Equal(t, "ja", a.Channel.Language, a)
 	assert.Equal(t, "http://www.mozilla.org/status/", a.Channel.Items[3].Link, a)
 
@@ -288,7 +287,7 @@ func Test_RssFeed_005(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, "rss", a.XMLName.Local, a)
-	assert.Equal(t, "0.91", a.Version, a)
+	assert.Equal(t, "2.0", a.Version, a)
 	assert.Equal(t, 6, len(a.Channel.Items), a)
 
 }
@@ -406,7 +405,7 @@ The lyrics are &lt;a href=&quot;http://www.cs.cmu.edu/~mleone/gdead/dead-lyrics/
 	assert.Nil(t, err)
 
 	assert.Equal(t, "rss", a.XMLName.Local, a)
-	assert.Equal(t, "0.92", a.Version, a)
+	assert.Equal(t, "2.0", a.Version, a)
 	assert.Equal(t, "Dave Winer: Grateful Dead", a.Channel.Title, a.Channel)
 	assert.Equal(t, "http://www.scripting.com/blog/categories/gratefulDead.html", a.Channel.Link, a.Channel)
 	assert.Equal(t, "A high-fidelity Grateful Dead song every day. This is where we're experimenting with enclosures on RSS news items that download when you're not using your computer. If it works (it will) it will be the end of the Click-And-Wait multimedia experience on the Internet. ", a.Channel.Description, a.Channel)
@@ -623,7 +622,7 @@ func Test_RssFeed_009(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, "rss", a.XMLName.Local, a)
-	assert.Equal(t, "0.91", a.Version, a)
+	assert.Equal(t, "2.0", a.Version, a)
 
 }
 

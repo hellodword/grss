@@ -14,8 +14,30 @@ type Feed interface {
 }
 
 func (f *JSONFeed) ToJSON() *JSONFeed {
-	// TODO to JSONFeed 1.1
-	return f
+	ff := &JSONFeed{
+		Version:     "https://jsonfeed.org/version/1.1",
+		Title:       f.Title,
+		HomePageURL: f.HomePageURL,
+		FeedURL:     f.FeedURL,
+		Description: f.Description,
+		UserComment: f.UserComment,
+		NextURL:     f.NextURL,
+		Icon:        f.Icon,
+		Favicon:     f.Favicon,
+		Expired:     f.Expired,
+		Items:       f.Items,
+		Hub:         f.Hub,
+		Extensions:  f.Extensions,
+		Language:    f.Language,
+	}
+
+	if f.Author != nil {
+		ff.Authors = append(ff.Authors, f.Author)
+	}
+
+	ff.Authors = append(ff.Authors, f.Authors...)
+
+	return ff
 }
 
 func (f *JSONFeed) ToRss() *RssFeed {
@@ -468,8 +490,60 @@ func (f *RssFeed) ToJSON() *JSONFeed {
 }
 
 func (f *RssFeed) ToRss() *RssFeed {
-	// TODO to RssFeed 2.0
-	return f
+	ff := &RssFeed{
+		XMLName: xml.Name{
+			Space: "",
+			Local: "rss",
+		},
+		Attributes:   f.Attributes,
+		Version:      "2.0",
+		XmlnsContent: f.XmlnsContent,
+		Channel:      nil,
+		Image:        nil,
+		Items:        nil,
+		TextInput:    nil,
+	}
+
+	if f.Channel == nil {
+		return ff
+	}
+
+	ff.Channel = &RssChannel{
+		Attributes:       f.Channel.Attributes,
+		Title:            f.Channel.Title,
+		Link:             f.Channel.Link,
+		Description:      f.Channel.Description,
+		Language:         f.Channel.Language,
+		Copyright:        f.Channel.Copyright,
+		ManagingEditor:   f.Channel.ManagingEditor,
+		WebMaster:        f.Channel.WebMaster,
+		PubDate:          f.Channel.PubDate,
+		LastBuildDate:    f.Channel.LastBuildDate,
+		Categories:       f.Channel.Categories,
+		Generator:        f.Channel.Generator,
+		Docs:             f.Channel.Docs,
+		Cloud:            f.Channel.Cloud,
+		Ttl:              f.Channel.Ttl,
+		Image:            f.Channel.Image,
+		Rating:           f.Channel.Rating,
+		TextInput:        f.Channel.TextInput,
+		SkipHours:        f.Channel.SkipHours,
+		SkipDays:         f.Channel.SkipDays,
+		Items:            nil,
+		ExtensionElement: f.Channel.ExtensionElement,
+	}
+
+	if ff.Channel.Image == nil {
+		ff.Channel.Image = f.Image
+	}
+
+	if ff.Channel.TextInput == nil {
+		ff.Channel.TextInput = f.TextInput
+	}
+
+	ff.Channel.Items = append(f.Channel.Items, f.Items...)
+
+	return ff
 }
 
 func (f *RssFeed) ToAtom() *AtomFeed {
@@ -945,8 +1019,28 @@ func (f *AtomFeed) ToRss() *RssFeed {
 }
 
 func (f *AtomFeed) ToAtom() *AtomFeed {
-	// TODO to Atom 1.0
-	return f
+	ff := &AtomFeed{
+		XMLName: xml.Name{
+			Space: "",
+			Local: "feed",
+		},
+		AtomCommonAttributes: f.AtomCommonAttributes,
+		Authors:              f.Authors,
+		Categories:           f.Categories,
+		Contributors:         f.Contributors,
+		Generator:            f.Generator,
+		Icon:                 f.Icon,
+		ID:                   f.ID,
+		Links:                f.Links,
+		Logo:                 f.Logo,
+		Rights:               f.Rights,
+		Subtitle:             f.Subtitle,
+		Title:                f.Title,
+		Updated:              f.Updated,
+		ExtensionElement:     f.ExtensionElement,
+		Entries:              f.Entries,
+	}
+	return ff
 }
 
 func (f *AtomFeed) WriteOut(w io.Writer) error {
