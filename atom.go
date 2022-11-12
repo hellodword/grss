@@ -278,7 +278,7 @@ type AtomFeed struct {
 	Contributors []*AtomPersonConstruct `xml:"contributor,omitempty"`
 	Generator    *AtomGenerator         `xml:"generator,omitempty"`
 	Icon         *AtomIcon              `xml:"icon,omitempty"`
-	ID           *AtomId                `xml:"id,omitempty"`
+	ID           AtomId                 `xml:"id"`
 	Links        []*AtomLink            `xml:"link,omitempty"`
 	Logo         *AtomLogo              `xml:"logo,omitempty"`
 	Rights       *AtomTextConstruct     `xml:"rights,omitempty"`

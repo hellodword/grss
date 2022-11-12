@@ -24,3 +24,27 @@ func newXmlDecoder(r io.Reader) *xml.Decoder {
 	}
 	return d
 }
+
+func addAttrs(pre [][3]string, src []xml.Attr) (attrs []xml.Attr) {
+	for i := range pre {
+		var b bool
+		for j := range src {
+			a := src[j]
+			if a.Value == pre[i][2] && a.Name.Space == pre[i][0] && a.Name.Local == pre[i][1] {
+				b = true
+				break
+			}
+		}
+		if !b {
+			attrs = append(attrs, xml.Attr{
+				Name: xml.Name{
+					Space: pre[i][0],
+					Local: pre[i][1],
+				},
+				Value: pre[i][2],
+			})
+		}
+	}
+
+	return attrs
+}

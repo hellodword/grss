@@ -3,15 +3,32 @@ package grss
 import (
 	"encoding/json"
 	"github.com/nbio/xml"
+	"html"
 	"io"
+	"sort"
+	"time"
 )
 
+// https://validator.w3.org/feed/docs/howto/declare_namespaces.html
+// https://validator.w3.org/feed/#validate_by_input
+// https://github.com/w3c/feedvalidator/tree/main/src
+// https://rss.com/blog/rss-feed-validators/
+// https://podba.se/validate/
+// https://www.rssboard.org/rss-validator/
+// https://github.com/andre487/feed-validator
+// https://www.castfeedvalidator.com/
+
 type Feed interface {
+	Uniform()
 	Mime(fallback bool) string
 	ToJSON() *JSONFeed
 	ToRss() *RssFeed
 	ToAtom() *AtomFeed
 	WriteOut(w io.Writer) error
+}
+
+func (f *JSONFeed) Uniform() {
+	f.Version = "https://jsonfeed.org/version/1.1"
 }
 
 func (f *JSONFeed) Mime(fallback bool) string {
@@ -39,6 +56,7 @@ func (f *JSONFeed) ToJSON() *JSONFeed {
 		Extensions:  f.Extensions,
 		Language:    f.Language,
 	}
+	defer ff.Uniform()
 
 	if f.Author != nil {
 		ff.Authors = append(ff.Authors, f.Author)
@@ -55,13 +73,13 @@ func (f *JSONFeed) ToRss() *RssFeed {
 			Space: "",
 			Local: "rss",
 		},
-		Attributes:   nil,
-		Version:      "2.0",
-		XmlnsContent: "",
-		Channel:      nil,
-		Image:        nil,
-		Items:        nil,
-		TextInput:    nil,
+		Attributes: nil,
+		Version:    "2.0",
+		//XmlnsContent: "",
+		Channel:   nil,
+		Image:     nil,
+		Items:     nil,
+		TextInput: nil,
 	}
 
 	ff.Channel = &RssChannel{
@@ -88,6 +106,7 @@ func (f *JSONFeed) ToRss() *RssFeed {
 		Items:            nil,
 		ExtensionElement: nil,
 	}
+	defer ff.Uniform()
 
 	ff.Channel.Title = f.Title
 	ff.Channel.Link = f.HomePageURL
@@ -140,32 +159,34 @@ func (f *JSONFeed) ToRss() *RssFeed {
 
 		item.Title = jitem.Title
 
+		if jitem.Summary != "" {
+			item.Description = jitem.Summary
+		}
+
 		if jitem.ContentHTML != "" {
 			item.ContentEncoded = &RssContent{
 				XMLName: xml.Name{
-					Space: "",
-					Local: "content:encoded",
+					Space: "http://purl.org/rss/1.0/modules/content/",
+					Local: "encoded",
 				},
-				Content: []byte(jitem.ContentHTML),
+				Content: []byte(html.EscapeString(html.UnescapeString(jitem.ContentHTML))),
 			}
 		}
 
 		if jitem.ContentText != "" {
 			item.ContentEncoded = &RssContent{
 				XMLName: xml.Name{
-					Space: "",
-					Local: "content:encoded",
+					Space: "http://purl.org/rss/1.0/modules/content/",
+					Local: "encoded",
 				},
-				Content: []byte(jitem.ContentText),
+				Content: []byte(html.EscapeString(html.UnescapeString(jitem.ContentText))),
 			}
 		}
 
-		item.Description = jitem.Summary
-
 		if jitem.DatePublished == "" {
-			item.PubDate = jitem.DateModified
+			item.PubDate = FormatDate(jitem.DateModified, time.RFC1123Z)
 		} else {
-			item.PubDate = jitem.DatePublished
+			item.PubDate = FormatDate(jitem.DatePublished, time.RFC1123Z)
 		}
 
 		jauthors := jitem.Authors
@@ -201,16 +222,20 @@ func (f *JSONFeed) ToAtom() *AtomFeed {
 		Contributors:         nil,
 		Generator:            nil,
 		Icon:                 nil,
-		ID:                   nil,
-		Links:                nil,
-		Logo:                 nil,
-		Rights:               nil,
-		Subtitle:             nil,
-		Title:                nil,
-		Updated:              nil,
-		ExtensionElement:     nil,
-		Entries:              nil,
+		ID: AtomId{
+			AtomCommonAttributes: AtomCommonAttributes{},
+			AtomUri:              "",
+		},
+		Links:            nil,
+		Logo:             nil,
+		Rights:           nil,
+		Subtitle:         nil,
+		Title:            nil,
+		Updated:          nil,
+		ExtensionElement: nil,
+		Entries:          nil,
 	}
+	defer ff.Uniform()
 
 	if f.Title != "" {
 		ff.Title = &AtomTextConstruct{
@@ -222,6 +247,8 @@ func (f *JSONFeed) ToAtom() *AtomFeed {
 	}
 
 	if f.HomePageURL != "" {
+		ff.ID.AtomUri = AtomUri(f.HomePageURL)
+
 		ff.Links = []*AtomLink{
 			{
 				AtomCommonAttributes: AtomCommonAttributes{},
@@ -324,12 +351,8 @@ func (f *JSONFeed) ToAtom() *AtomFeed {
 				AtomCommonAttributes: AtomCommonAttributes{},
 				Type:                 "html",
 				Src:                  nil,
-				Text:                 "",
-				Div: &AtomXhtmlDiv{
-					UndefinedAttribute: nil,
-					Text:               []byte(item.ContentHTML),
-				},
-				Bytes: nil,
+				Text:                 item.ContentHTML,
+				Bytes:                nil,
 			}
 		}
 
@@ -378,6 +401,35 @@ func (f *JSONFeed) WriteOut(w io.Writer) error {
 	return e.Encode(f)
 }
 
+func (f *RssFeed) Uniform() {
+	f.Version = "2.0"
+	f.XMLName = xml.Name{
+		Space: "",
+		Local: "rss",
+	}
+
+	pre := [][3]string{
+		{"http://www.w3.org/2000/xmlns/", "media", "http://search.yahoo.com/mrss/"},
+		{"http://www.w3.org/2000/xmlns/", "dc", "http://purl.org/dc/elements/1.1/"},
+		{"http://www.w3.org/2000/xmlns/", "content", "http://purl.org/rss/1.0/modules/content/"},
+		{"http://www.w3.org/2000/xmlns/", "atom", "http://www.w3.org/2005/Atom"},
+	}
+
+	f.Attributes = append(f.Attributes, addAttrs(pre, f.Attributes)...)
+
+	for _, item := range f.Channel.Items {
+		if item.ContentEncoded != nil && item.Description == "" {
+			if item.Title != "" {
+				item.Description = item.Title
+			} else if item.Link != "" {
+				item.Description = item.Link
+			} else {
+				item.Description = "Unknown"
+			}
+		}
+	}
+}
+
 func (f *RssFeed) Mime(fallback bool) string {
 	if fallback {
 		return RssMimeFallback
@@ -405,6 +457,7 @@ func (f *RssFeed) ToJSON() *JSONFeed {
 		//Authors:     nil,
 		Language: "",
 	}
+	defer ff.Uniform()
 
 	if f.Channel == nil {
 		return ff
@@ -512,13 +565,13 @@ func (f *RssFeed) ToRss() *RssFeed {
 			Space: "",
 			Local: "rss",
 		},
-		Attributes:   f.Attributes,
-		Version:      "2.0",
-		XmlnsContent: f.XmlnsContent,
-		Channel:      nil,
-		Image:        nil,
-		Items:        nil,
-		TextInput:    nil,
+		Attributes: f.Attributes,
+		Version:    "2.0",
+		//XmlnsContent: f.XmlnsContent,
+		Channel:   nil,
+		Image:     nil,
+		Items:     nil,
+		TextInput: nil,
 	}
 
 	if f.Channel == nil {
@@ -549,6 +602,7 @@ func (f *RssFeed) ToRss() *RssFeed {
 		Items:            nil,
 		ExtensionElement: f.Channel.ExtensionElement,
 	}
+	defer ff.Uniform()
 
 	if ff.Channel.Image == nil {
 		ff.Channel.Image = f.Image
@@ -575,7 +629,10 @@ func (f *RssFeed) ToAtom() *AtomFeed {
 		Contributors: nil,
 		Generator:    nil,
 		Icon:         nil,
-		ID:           nil,
+		ID: AtomId{
+			AtomCommonAttributes: AtomCommonAttributes{},
+			AtomUri:              "",
+		},
 		//Links:            nil,
 		Logo:     nil,
 		Rights:   nil,
@@ -585,6 +642,7 @@ func (f *RssFeed) ToAtom() *AtomFeed {
 		ExtensionElement: nil,
 		//Entries:          nil,
 	}
+	defer ff.Uniform()
 
 	if f.Channel == nil {
 		return ff
@@ -619,6 +677,8 @@ func (f *RssFeed) ToAtom() *AtomFeed {
 	}
 
 	if f.Channel.Link != "" {
+		ff.ID.AtomUri = AtomUri(f.Channel.Link)
+
 		ff.Links = []*AtomLink{
 			{
 				AtomCommonAttributes: AtomCommonAttributes{},
@@ -781,6 +841,84 @@ func (f *RssFeed) WriteOut(w io.Writer) error {
 	return e.Encode(f)
 }
 
+func (f *AtomFeed) Uniform() {
+	now := time.Now()
+
+	f.XMLName = xml.Name{
+		Space: "http://www.w3.org/2005/Atom",
+		Local: "feed",
+	}
+
+	pre := [][3]string{
+		{"", "xmlns", "http://www.w3.org/2005/Atom"},
+		{"http://www.w3.org/2000/xmlns/", "media", "http://search.yahoo.com/mrss/"},
+	}
+
+	f.UndefinedAttribute = append(f.UndefinedAttribute, addAttrs(pre, f.UndefinedAttribute)...)
+
+	if f.Updated == nil {
+		var ts sort.StringSlice
+		for _, entry := range f.Entries {
+			if entry.Updated != nil {
+				ts = append(ts, FormatDate(entry.Updated.DateTime, time.RFC3339))
+			} else if entry.Published != nil {
+				ts = append(ts, FormatDate(entry.Published.DateTime, time.RFC3339))
+			}
+		}
+
+		sort.Sort(sort.Reverse(ts))
+
+		if len(ts) > 0 {
+			f.Updated = &AtomDateConstruct{
+				AtomCommonAttributes: AtomCommonAttributes{},
+				DateTime:             ts[0],
+			}
+		} else {
+			f.Updated = &AtomDateConstruct{
+				AtomCommonAttributes: AtomCommonAttributes{},
+				DateTime:             now.Format(time.RFC3339),
+			}
+		}
+
+	}
+
+	for _, entry := range f.Entries {
+		if len(entry.Authors) > 0 {
+			continue
+		}
+
+		if len(f.Authors) > 0 {
+			entry.Authors = []*AtomPersonConstruct{f.Authors[0]}
+			continue
+		}
+
+		entry.Authors = []*AtomPersonConstruct{
+			{
+				Name:  "Unknown (grss)",
+				Uri:   "",
+				Email: "",
+			},
+		}
+	}
+
+	for _, entry := range f.Entries {
+		if entry.Updated != nil {
+			continue
+		}
+
+		if entry.Published != nil {
+			entry.Updated = entry.Published
+			continue
+		}
+
+		entry.Updated = &AtomDateConstruct{
+			AtomCommonAttributes: AtomCommonAttributes{},
+			DateTime:             now.Format(time.RFC3339),
+		}
+	}
+
+}
+
 func (f *AtomFeed) Mime(fallback bool) string {
 	if fallback {
 		return AtomMimeFallback
@@ -808,6 +946,7 @@ func (f *AtomFeed) ToJSON() *JSONFeed {
 		//Authors:    nil,
 		//Language: "",
 	}
+	defer ff.Uniform()
 
 	if f.Title != nil {
 		ff.Title = f.Title.String()
@@ -908,14 +1047,15 @@ func (f *AtomFeed) ToRss() *RssFeed {
 			Space: "",
 			Local: "rss",
 		},
-		Attributes:   nil,
-		Version:      "2.0",
-		XmlnsContent: "",
-		Channel:      nil,
-		Image:        nil,
-		Items:        nil,
-		TextInput:    nil,
+		Attributes: nil,
+		Version:    "2.0",
+		//XmlnsContent: "",
+		Channel:   nil,
+		Image:     nil,
+		Items:     nil,
+		TextInput: nil,
 	}
+
 	ff.Channel = &RssChannel{
 		Attributes: nil,
 		//Title:       "",
@@ -940,6 +1080,7 @@ func (f *AtomFeed) ToRss() *RssFeed {
 		//Items:            nil,
 		ExtensionElement: nil,
 	}
+	defer ff.Uniform()
 
 	if len(f.Authors) > 0 {
 		ff.Channel.WebMaster = string(f.Authors[0].Email)
@@ -957,8 +1098,8 @@ func (f *AtomFeed) ToRss() *RssFeed {
 	}
 
 	if f.Updated != nil {
-		ff.Channel.PubDate = f.Updated.DateTime
-		ff.Channel.LastBuildDate = f.Updated.DateTime
+		ff.Channel.PubDate = FormatDate(f.Updated.DateTime, time.RFC1123Z)
+		ff.Channel.LastBuildDate = FormatDate(f.Updated.DateTime, time.RFC1123Z)
 	}
 
 	for _, entry := range f.Entries {
@@ -992,17 +1133,10 @@ func (f *AtomFeed) ToRss() *RssFeed {
 		if entry.Content != nil {
 			item.ContentEncoded = &RssContent{
 				XMLName: xml.Name{
-					Space: "",
-					Local: "content:encoded",
+					Space: "http://purl.org/rss/1.0/modules/content/",
+					Local: "encoded",
 				},
-			}
-
-			item.ContentEncoded = &RssContent{
-				XMLName: xml.Name{
-					Space: "",
-					Local: "content:encoded",
-				},
-				Content: []byte(entry.Content.String()),
+				Content: []byte(html.EscapeString(html.UnescapeString(entry.Content.String()))),
 			}
 		}
 
@@ -1018,9 +1152,9 @@ func (f *AtomFeed) ToRss() *RssFeed {
 		}
 
 		if entry.Published != nil {
-			item.PubDate = entry.Published.DateTime
+			item.PubDate = FormatDate(entry.Published.DateTime, time.RFC1123Z)
 		} else if entry.Updated != nil {
-			item.PubDate = entry.Updated.DateTime
+			item.PubDate = FormatDate(entry.Updated.DateTime, time.RFC1123Z)
 		}
 
 		if entry.Summary != nil {
@@ -1065,6 +1199,8 @@ func (f *AtomFeed) ToAtom() *AtomFeed {
 		ExtensionElement:     f.ExtensionElement,
 		Entries:              f.Entries,
 	}
+	defer ff.Uniform()
+
 	return ff
 }
 

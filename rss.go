@@ -32,9 +32,9 @@ const (
 type RssFeed struct {
 	XMLName xml.Name
 
-	Attributes   []xml.Attr `xml:",any,attr,omitempty"`
-	Version      string     `xml:"version,attr,omitempty"`
-	XmlnsContent string     `xml:"xmlns:content,attr,omitempty"`
+	Attributes []xml.Attr `xml:",any,attr,omitempty"`
+	Version    string     `xml:"version,attr,omitempty"`
+	//XmlnsContent string     `xml:"xmlns:content,attr,omitempty"`
 
 	Channel *RssChannel `xml:"channel,omitempty"`
 
@@ -50,11 +50,11 @@ type RssChannel struct {
 	// the required channel elements, each with a brief description, an example, and where available, a pointer to a more complete description.
 
 	// Title The name of the channel. It's how people refer to your service. If you have an HTML website that contains the same information as your RSS file, the title of your channel should be the same as the title of your website.
-	Title string `xml:"title,omitempty"`
+	Title string `xml:"title"`
 	// Link The URL to the HTML website corresponding to the channel.
-	Link string `xml:"link,omitempty"`
+	Link string `xml:"link"`
 	// Description	Phrase or sentence describing the channel.
-	Description string `xml:"description,omitempty"`
+	Description string `xml:"description"`
 
 	// optional channel elements.
 
@@ -67,6 +67,7 @@ type RssChannel struct {
 	// WebMaster Email address for person responsible for technical issues relating to channel.
 	WebMaster string `xml:"webMaster,omitempty"`
 	// PubDate The publication date for the content in the channel. For example, the New York Times publishes on a daily basis, the publication date flips once every 24 hours. That's when the pubDate of the channel changes. All date-times in RSS conform to the Date and Time Specification of RFC 822, with the exception that the year may be expressed with two characters or four characters (four preferred).
+	// TODO w3c pubDate must be an RFC-822 date-time
 	PubDate string `xml:"pubDate,omitempty"`
 	// LastBuildDate The last time the content of the channel changed.
 	LastBuildDate string `xml:"lastBuildDate,omitempty"`
