@@ -152,7 +152,7 @@ func Test_AtomTextConstruct_XHTMLWithText(t *testing.T) {
 	assert.EqualValues(t, "en-us", a.Language, a)
 	assert.EqualValues(t, "http://title/base", a.Base, a)
 	assert.EqualValues(t, "http://www.w3.org/1999/xhtml", a.Div.UndefinedAttribute[0].Value, a)
-	assert.EqualValues(t, "\n        title\n    ", string(a.String()), a)
+	assert.EqualValues(t, "\n        title\n    ", a.String(), a)
 
 }
 

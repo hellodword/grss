@@ -69,3 +69,5 @@
 - [GitHub - bcomnes/jsonfeed-to-rss](https://github.com/bcomnes/jsonfeed-to-rss)
 - [Google - Best practices for XML sitemaps and RSS/Atom feeds](https://developers.google.com/search/blog/2014/10/best-practices-for-xml-sitemaps-rssatom)
 - [GitHub - kornelski/atom2rss: converting Atom 0.3 → Atom 1.0 → RSS 2.0.](https://github.com/kornelski/atom2rss)
+- [W3C/GitHub - rubys/feedvalidator](https://github.com/rubys/feedvalidator)
+- [W3C/GitHub - rubys/feedvalidator: testcases](https://github.com/rubys/feedvalidator/tree/master/testcases)
