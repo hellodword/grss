@@ -119,7 +119,7 @@ type RssItem struct {
 	// Source The RSS channel that the item came from.
 	Source *RssSource `xml:"source,omitempty"`
 
-	Content        *RssContent `xml:"content,omitempty"`
+	//Content        *RssContent `xml:"content,omitempty"`
 	ContentEncoded *RssContent `xml:"http://purl.org/rss/1.0/modules/content/ encoded,omitempty"`
 }
 

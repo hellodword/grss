@@ -66,3 +66,6 @@
 - [RssBoard - Feed Validator](https://www.rssboard.org/rss-validator/)
 - [mnot.net - RSS and Atom Feed Tutorial](https://www.mnot.net/rss/tutorial/)
 - [GitHub - andre487/feed-validator](https://github.com/andre487/feed-validator)
+- [GitHub - bcomnes/jsonfeed-to-rss](https://github.com/bcomnes/jsonfeed-to-rss)
+- [Google - Best practices for XML sitemaps and RSS/Atom feeds](https://developers.google.com/search/blog/2014/10/best-practices-for-xml-sitemaps-rssatom)
+- [GitHub - kornelski/atom2rss: converting Atom 0.3 → Atom 1.0 → RSS 2.0.](https://github.com/kornelski/atom2rss)
