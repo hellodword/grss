@@ -3,7 +3,6 @@ package grss
 import (
 	"encoding/json"
 	"github.com/nbio/xml"
-	"html"
 	"io"
 	"sort"
 	"strconv"
@@ -30,6 +29,22 @@ type Feed interface {
 
 func (f *JSONFeed) Uniform() {
 	f.Version = "https://jsonfeed.org/version/1.1"
+
+	if f.Title == "" {
+		f.Title = f.FeedURL
+	}
+	if f.Title == "" {
+		f.Title = f.HomePageURL
+	}
+
+	for _, jitem := range f.Items {
+		jitem.DatePublished = FormatDate(jitem.DatePublished, time.RFC3339)
+		jitem.DateModified = FormatDate(jitem.DateModified, time.RFC3339)
+
+		if jitem.ID == "" {
+			jitem.ID = jitem.URL
+		}
+	}
 }
 
 func (f *JSONFeed) Mime(fallback bool) string {
@@ -132,7 +147,7 @@ func (f *JSONFeed) ToRss() *RssFeed {
 					Local: "encoded",
 				},
 				XmlText: XmlText{
-					Cdata: html.EscapeString(html.UnescapeString(jitem.ContentHTML)),
+					Cdata: jitem.ContentHTML,
 				},
 			}
 		}
@@ -144,7 +159,7 @@ func (f *JSONFeed) ToRss() *RssFeed {
 					Local: "encoded",
 				},
 				XmlText: XmlText{
-					Cdata: html.EscapeString(html.UnescapeString(jitem.ContentText)),
+					Cdata: jitem.ContentText,
 				},
 			}
 		}
@@ -249,100 +264,100 @@ func (f *JSONFeed) ToAtom() *AtomFeed {
 	ff.Language = AtomLanguageTag(f.Language)
 
 	// https://www.jsonfeed.org/mappingrssandatom/#entry
-	for _, item := range f.Items {
+	for _, jitem := range f.Items {
 		entry := &AtomEntry{}
 		ff.Entries = append(ff.Entries, entry)
 
 		// Atom’s title, id, and summary map directly to JSON. In JSON, however, title and summary are always plain text.
-		if item.ID != "" {
+		if jitem.ID != "" {
 			entry.ID = &AtomId{
-				AtomUri: AtomUri(item.ID),
+				AtomUri: AtomUri(jitem.ID),
 			}
 		}
 
-		if item.Title != "" {
+		if jitem.Title != "" {
 			entry.Title = &AtomTextConstruct{
 				XmlText: XmlText{
-					Text: item.Title,
+					Text: jitem.Title,
 				},
 			}
 		}
 
-		if item.Summary != "" {
+		if jitem.Summary != "" {
 			entry.Summary = &AtomTextConstruct{
 				XmlText: XmlText{
-					Text: item.Summary,
+					Text: jitem.Summary,
 				},
 			}
 		}
 
 		// Atom uses a content’s type attribute to declare whether the text is plain text or HTML. type="html" or type="xhtml" in an Atom feed maps to content_html in JSON. type="text" maps to content_text in JSON.
-		if item.ContentText != "" {
+		if jitem.ContentText != "" {
 			entry.Content = &AtomContent{
 				XmlText: XmlText{
-					Cdata: item.ContentText,
+					Cdata: jitem.ContentText,
 				},
 			}
 		}
 
-		if item.ContentHTML != "" {
+		if jitem.ContentHTML != "" {
 			entry.Content = &AtomContent{
 				Type: "html",
 				XmlText: XmlText{
-					Cdata: html.EscapeString(html.UnescapeString(item.ContentHTML)),
+					Cdata: jitem.ContentHTML,
 				},
 			}
 		}
 
 		// link with rel="alternate" maps to url in JSON.
-		if item.URL != "" {
+		if jitem.URL != "" {
 			entry.Links = append(entry.Links, &AtomLink{
-				Href: AtomUri(item.URL),
+				Href: AtomUri(jitem.URL),
 				Rel:  "alternate",
 			})
 		}
 
 		// If rel="related" is used for links to an external site, in JSON Feed those map to external_url.
-		if item.ExternalURL != "" {
+		if jitem.ExternalURL != "" {
 			entry.Links = append(entry.Links, &AtomLink{
-				Href: AtomUri(item.ExternalURL),
+				Href: AtomUri(jitem.ExternalURL),
 				Rel:  "related",
 			})
 		}
 
 		// The author element contains name, uri, and email, while in JSON Feed it’s an object with name, url, and avatar values.
-		for i := range item.Authors {
+		for i := range jitem.Authors {
 			entry.Authors = append(entry.Authors, &AtomPersonConstruct{
-				Name: item.Authors[i].Name,
-				Uri:  AtomUri(item.Authors[i].URL),
+				Name: jitem.Authors[i].Name,
+				Uri:  AtomUri(jitem.Authors[i].URL),
 			})
 		}
 
 		// Atom’s published and updated dates map to date_published and date_modified in JSON. Both Atom and JSON Feed use the same date format.
-		if item.DatePublished != "" {
+		if jitem.DatePublished != "" {
 			entry.Published = &AtomDateConstruct{
-				DateTime: FormatDate(item.DatePublished, time.RFC3339),
+				DateTime: FormatDate(jitem.DatePublished, time.RFC3339),
 			}
 		}
 
-		if item.DateModified != "" {
+		if jitem.DateModified != "" {
 			entry.Updated = &AtomDateConstruct{
-				DateTime: FormatDate(item.DateModified, time.RFC3339),
+				DateTime: FormatDate(jitem.DateModified, time.RFC3339),
 			}
 		}
 
 		// Atom’s link with rel="enclosure" maps to attachments in JSON Feed. An Atom enclosure has attributes href, length, and type, and the JSON Feed attachment object has corresponding elements url, size_in_bytes, and mime_type. JSON Feed adds title and duration_in_seconds.
-		for i := range item.Attachments {
+		for i := range jitem.Attachments {
 			entry.Links = append(entry.Links, &AtomLink{
 				Rel:    "enclosure",
-				Href:   AtomUri(item.Attachments[i].URL),
-				Length: strconv.FormatUint(item.Attachments[i].SizeInBytes, 10),
-				Type:   AtomMediaType(item.Attachments[i].MimeType),
-				Title:  item.Attachments[i].Title,
+				Href:   AtomUri(jitem.Attachments[i].URL),
+				Length: strconv.FormatUint(jitem.Attachments[i].SizeInBytes, 10),
+				Type:   AtomMediaType(jitem.Attachments[i].MimeType),
+				Title:  jitem.Attachments[i].Title,
 			})
 		}
 
-		entry.Language = AtomLanguageTag(item.Language)
+		entry.Language = AtomLanguageTag(jitem.Language)
 	}
 
 	ff.Uniform()
@@ -370,7 +385,7 @@ func (f *RssFeed) Uniform() {
 		{"http://www.w3.org/2000/xmlns/", "atom", "http://www.w3.org/2005/Atom"},
 	}
 
-	f.Attributes = append(f.Attributes, addAttrs(pre, f.Attributes)...)
+	f.Attributes = append(f.Attributes, diffAttrs(pre, f.Attributes)...)
 
 	for _, item := range f.Channel.Items {
 		if item.ContentEncoded != nil && item.Description == "" {
@@ -775,7 +790,7 @@ func (f *AtomFeed) Uniform() {
 		{"http://www.w3.org/2000/xmlns/", "media", "http://search.yahoo.com/mrss/"},
 	}
 
-	f.UndefinedAttribute = append(f.UndefinedAttribute, addAttrs(pre, f.UndefinedAttribute)...)
+	f.UndefinedAttribute = append(f.UndefinedAttribute, diffAttrs(pre, f.UndefinedAttribute)...)
 
 	for _, entry := range f.Entries {
 		if entry.Updated != nil {
@@ -1084,7 +1099,11 @@ func (f *AtomFeed) ToRss() *RssFeed {
 		ff.Channel.Items = append(ff.Channel.Items, item)
 
 		if len(entry.Authors) > 0 {
-			item.Author = &RssAuthor{Email: string(entry.Authors[0].Email)}
+			if entry.Authors[0].Name != "" {
+				item.Author = &RssAuthor{Email: string(entry.Authors[0].Name)}
+			} else {
+				item.Author = &RssAuthor{Email: string(entry.Authors[0].Email)}
+			}
 		}
 
 		for i := range entry.Categories {

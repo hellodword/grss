@@ -20,13 +20,30 @@ type XmlText struct {
 }
 
 func (a *XmlText) String() string {
-	if a.InnerXml != "" {
-		return a.InnerXml
+	if a.Text != "" {
+		return a.Text
 	} else if a.Cdata != "" {
 		return a.Cdata
 	} else {
-		return a.Text
+		return a.InnerXml
 	}
+}
+
+func (a *XmlText) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	var inner struct {
+		Text     string `xml:",chardata"`
+		Cdata    string `xml:",cdata"`
+		InnerXml string `xml:",innerxml"`
+	}
+	if a.Text != "" {
+		inner.Text = a.Text
+	} else if a.Cdata != "" {
+		inner.Cdata = a.Cdata
+	} else {
+		inner.InnerXml = a.InnerXml
+	}
+
+	return e.EncodeElement(&inner, start)
 }
 
 func newXmlDecoder(r io.Reader) *xml.Decoder {
@@ -41,7 +58,7 @@ func newXmlDecoder(r io.Reader) *xml.Decoder {
 	return d
 }
 
-func addAttrs(pre [][3]string, src []xml.Attr) (attrs []xml.Attr) {
+func diffAttrs(pre [][3]string, src []xml.Attr) (attrs []xml.Attr) {
 	for i := range pre {
 		var b bool
 		for j := range src {
