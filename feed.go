@@ -9,15 +9,6 @@ import (
 	"time"
 )
 
-// https://validator.w3.org/feed/docs/howto/declare_namespaces.html
-// https://validator.w3.org/feed/#validate_by_input
-// https://github.com/w3c/feedvalidator/tree/main/src
-// https://rss.com/blog/rss-feed-validators/
-// https://podba.se/validate/
-// https://www.rssboard.org/rss-validator/
-// https://github.com/andre487/feed-validator
-// https://www.castfeedvalidator.com/
-
 type Feed interface {
 	Uniform()
 	Mime(fallback bool) string
@@ -507,19 +498,8 @@ func (f *RssFeed) ToJSON() *JSONFeed {
 }
 
 func (f *RssFeed) ToRss() *RssFeed {
-	ff := &RssFeed{
-		XMLName: xml.Name{
-			Space: "",
-			Local: "rss",
-		},
-		Attributes: f.Attributes,
-		Version:    "2.0",
-		//XmlnsContent: f.XmlnsContent,
-		Channel:   nil,
-		Image:     nil,
-		Items:     nil,
-		TextInput: nil,
-	}
+	ff := &RssFeed{}
+	ff.Attributes = f.Attributes
 
 	if f.Channel == nil {
 		return ff
@@ -565,30 +545,7 @@ func (f *RssFeed) ToRss() *RssFeed {
 }
 
 func (f *RssFeed) ToAtom() *AtomFeed {
-	ff := &AtomFeed{
-		XMLName: xml.Name{
-			Space: "",
-			Local: "feed",
-		},
-		AtomCommonAttributes: AtomCommonAttributes{},
-		//Authors:              nil,
-		//Categories:       nil,
-		Contributors: nil,
-		Generator:    nil,
-		Icon:         nil,
-		ID: AtomId{
-			AtomCommonAttributes: AtomCommonAttributes{},
-			AtomUri:              "",
-		},
-		//Links:            nil,
-		Logo:     nil,
-		Rights:   nil,
-		Subtitle: nil,
-		//Title:            nil,
-		//Updated:          nil,
-		ExtensionElement: nil,
-		//Entries:          nil,
-	}
+	ff := &AtomFeed{}
 
 	if f.Channel == nil {
 		return ff
@@ -596,29 +553,23 @@ func (f *RssFeed) ToAtom() *AtomFeed {
 
 	if f.Channel.WebMaster != "" {
 		ff.Authors = append(ff.Authors, &AtomPersonConstruct{
-			AtomCommonAttributes: AtomCommonAttributes{},
-			Name:                 f.Channel.WebMaster,
-			Uri:                  "",
-			Email:                AtomEmailAddress(f.Channel.WebMaster),
+			Name:  f.Channel.WebMaster,
+			Email: AtomEmailAddress(f.Channel.WebMaster),
 		})
 	}
 
 	if f.Channel.ManagingEditor != "" {
 		ff.Authors = append(ff.Authors, &AtomPersonConstruct{
-			AtomCommonAttributes: AtomCommonAttributes{},
-			Name:                 f.Channel.ManagingEditor,
-			Uri:                  "",
-			Email:                AtomEmailAddress(f.Channel.ManagingEditor),
+			Name:  f.Channel.ManagingEditor,
+			Email: AtomEmailAddress(f.Channel.ManagingEditor),
 		})
 	}
 
 	for i := range f.Channel.Categories {
 		ff.Categories = append(ff.Categories, &AtomCategory{
-			AtomCommonAttributes: AtomCommonAttributes{},
-			Term:                 f.Channel.Categories[i].Text,
-			Scheme:               AtomUri(f.Channel.Categories[i].Domain),
-			Label:                f.Channel.Categories[i].Text,
-			UndefinedContent:     nil,
+			Term:   f.Channel.Categories[i].Text,
+			Scheme: AtomUri(f.Channel.Categories[i].Domain),
+			Label:  f.Channel.Categories[i].Text,
 		})
 	}
 
@@ -627,125 +578,84 @@ func (f *RssFeed) ToAtom() *AtomFeed {
 
 		ff.Links = []*AtomLink{
 			{
-				AtomCommonAttributes: AtomCommonAttributes{},
-				Href:                 AtomUri(f.Channel.Link),
-				Rel:                  "",
-				Type:                 "",
-				Hreflang:             "",
-				Title:                "",
-				Length:               "",
-				UndefinedContent:     nil,
+				Href: AtomUri(f.Channel.Link),
 			},
 		}
 	}
 
 	if f.Channel.Title.String() != "" {
 		ff.Title = &AtomTextConstruct{
-			AtomCommonAttributes: AtomCommonAttributes{},
-			XmlText:              f.Channel.Title,
+			XmlText: f.Channel.Title,
 		}
 	}
 
 	if f.Channel.PubDate != "" {
 		ff.Updated = &AtomDateConstruct{
-			AtomCommonAttributes: AtomCommonAttributes{},
-			DateTime:             FormatDate(f.Channel.PubDate, time.RFC3339),
+			DateTime: FormatDate(f.Channel.PubDate, time.RFC3339),
 		}
 	} else if f.Channel.LastBuildDate != "" {
 		ff.Updated = &AtomDateConstruct{
-			AtomCommonAttributes: AtomCommonAttributes{},
-			DateTime:             FormatDate(f.Channel.LastBuildDate, time.RFC3339),
+			DateTime: FormatDate(f.Channel.LastBuildDate, time.RFC3339),
 		}
 	}
 
 	for _, item := range append(f.Items, f.Channel.Items...) {
-		entry := &AtomEntry{
-			AtomCommonAttributes: AtomCommonAttributes{},
-			//Authors:              nil,
-			//Categories:       nil,
-			//Content:          nil,
-			Contributors: nil,
-			//ID:               nil,
-			//Links:            nil,
-			//Published:        nil,
-			Rights: nil,
-			Source: nil,
-			//Summary: nil,
-			//Title: nil,
-			//Updated:          nil,
-			ExtensionElement: nil,
-		}
+		entry := &AtomEntry{}
 		ff.Entries = append(ff.Entries, entry)
 
 		if item.Author != nil {
 			entry.Authors = []*AtomPersonConstruct{
 				{
-					AtomCommonAttributes: AtomCommonAttributes{},
-					Name:                 item.Author.Email,
+					Name: item.Author.Email,
 				},
 			}
 		}
 
 		for i := range item.Categories {
 			ff.Categories = append(ff.Categories, &AtomCategory{
-				AtomCommonAttributes: AtomCommonAttributes{},
-				Term:                 item.Categories[i].Text,
-				Scheme:               AtomUri(item.Categories[i].Domain),
-				Label:                item.Categories[i].Text,
-				UndefinedContent:     nil,
+				Term:   item.Categories[i].Text,
+				Scheme: AtomUri(item.Categories[i].Domain),
+				Label:  item.Categories[i].Text,
 			})
 		}
 
 		if item.ContentEncoded != nil {
 			entry.Content = &AtomContent{
-				AtomCommonAttributes: AtomCommonAttributes{},
-				XmlText:              item.ContentEncoded.XmlText,
+				XmlText: item.ContentEncoded.XmlText,
 			}
 		}
 		//else if item.Content != nil {
 		//	entry.Content = &AtomContent{
-		//		AtomCommonAttributes: AtomCommonAttributes{},
 		//		XmlText:              item.Content.XmlText,
 		//	}
 		//}
 
 		if item.Guid != nil {
 			entry.ID = &AtomId{
-				AtomCommonAttributes: AtomCommonAttributes{},
-				AtomUri:              AtomUri(item.Guid.Guid),
+				AtomUri: AtomUri(item.Guid.Guid),
 			}
 		}
 
 		if item.Link != "" {
 			entry.Links = []*AtomLink{
 				{
-					AtomCommonAttributes: AtomCommonAttributes{},
-					Href:                 AtomUri(item.Link),
-					Rel:                  "",
-					Type:                 "",
-					Hreflang:             "",
-					Title:                "",
-					Length:               "",
-					UndefinedContent:     nil,
+					Href: AtomUri(item.Link),
 				},
 			}
 		}
 
 		if item.PubDate != "" {
 			entry.Published = &AtomDateConstruct{
-				AtomCommonAttributes: AtomCommonAttributes{},
-				DateTime:             FormatDate(item.PubDate, time.RFC3339),
+				DateTime: FormatDate(item.PubDate, time.RFC3339),
 			}
 
 			entry.Updated = &AtomDateConstruct{
-				AtomCommonAttributes: AtomCommonAttributes{},
-				DateTime:             FormatDate(item.PubDate, time.RFC3339),
+				DateTime: FormatDate(item.PubDate, time.RFC3339),
 			}
 		}
 
 		if entry.Content == nil && item.Description != "" {
 			entry.Summary = &AtomTextConstruct{
-				AtomCommonAttributes: AtomCommonAttributes{},
 				XmlText: XmlText{
 					Cdata: item.Description,
 				},
@@ -754,7 +664,6 @@ func (f *RssFeed) ToAtom() *AtomFeed {
 
 		if item.Title != "" {
 			entry.Title = &AtomTextConstruct{
-				AtomCommonAttributes: AtomCommonAttributes{},
 				XmlText: XmlText{
 					Text: item.Title,
 				},
@@ -815,13 +724,11 @@ func (f *AtomFeed) Uniform() {
 
 		if len(ts) > 0 {
 			f.Updated = &AtomDateConstruct{
-				AtomCommonAttributes: AtomCommonAttributes{},
-				DateTime:             ts[0],
+				DateTime: ts[0],
 			}
 		} else {
 			f.Updated = &AtomDateConstruct{
-				AtomCommonAttributes: AtomCommonAttributes{},
-				DateTime:             now.Format(time.RFC3339),
+				DateTime: now.Format(time.RFC3339),
 			}
 		}
 
@@ -855,8 +762,7 @@ func (f *AtomFeed) Uniform() {
 		}
 
 		entry.Updated = &AtomDateConstruct{
-			AtomCommonAttributes: AtomCommonAttributes{},
-			DateTime:             now.Format(time.RFC3339),
+			DateTime: now.Format(time.RFC3339),
 		}
 	}
 
@@ -886,8 +792,7 @@ func (f *AtomFeed) Uniform() {
 		if entry.ID == nil {
 			if len(entry.Links) > 0 && entry.Links[0].Href != "" {
 				entry.ID = &AtomId{
-					AtomCommonAttributes: AtomCommonAttributes{},
-					AtomUri:              entry.Links[0].Href,
+					AtomUri: entry.Links[0].Href,
 				}
 			}
 		}
@@ -1022,44 +927,9 @@ func (f *AtomFeed) ToJSON() *JSONFeed {
 }
 
 func (f *AtomFeed) ToRss() *RssFeed {
-	ff := &RssFeed{
-		XMLName: xml.Name{
-			Space: "",
-			Local: "rss",
-		},
-		Attributes: nil,
-		Version:    "2.0",
-		//XmlnsContent: "",
-		Channel:   nil,
-		Image:     nil,
-		Items:     nil,
-		TextInput: nil,
-	}
+	ff := &RssFeed{}
 
-	ff.Channel = &RssChannel{
-		Attributes: nil,
-		//Title:       "",
-		//Link:        "",
-		//Description: "",
-		Language:  "",
-		Copyright: "",
-		//ManagingEditor:   "",
-		//WebMaster:        "",
-		//PubDate:       "",
-		//LastBuildDate: "",
-		//Categories:       nil,
-		Generator: "",
-		Docs:      "",
-		Cloud:     nil,
-		Ttl:       "",
-		Image:     nil,
-		Rating:    nil,
-		TextInput: nil,
-		SkipHours: nil,
-		SkipDays:  nil,
-		//Items:            nil,
-		ExtensionElement: nil,
-	}
+	ff.Channel = &RssChannel{}
 
 	if len(f.Authors) > 0 {
 		ff.Channel.WebMaster = string(f.Authors[0].Email)
@@ -1082,25 +952,12 @@ func (f *AtomFeed) ToRss() *RssFeed {
 	}
 
 	for _, entry := range f.Entries {
-		item := &RssItem{
-			//Title: "",
-			//Link:        "",
-			Description: "",
-			//Author:         nil,
-			//Categories:     nil,
-			Comments:  "",
-			Enclosure: nil,
-			//Guid:      nil,
-			//PubDate: "",
-			Source: nil,
-			//Content:        nil,
-			ContentEncoded: nil,
-		}
+		item := &RssItem{}
 		ff.Channel.Items = append(ff.Channel.Items, item)
 
 		if len(entry.Authors) > 0 {
 			if entry.Authors[0].Name != "" {
-				item.Author = &RssAuthor{Email: string(entry.Authors[0].Name)}
+				item.Author = &RssAuthor{Email: entry.Authors[0].Name}
 			} else {
 				item.Author = &RssAuthor{Email: string(entry.Authors[0].Email)}
 			}
@@ -1125,8 +982,7 @@ func (f *AtomFeed) ToRss() *RssFeed {
 
 		if entry.ID != nil {
 			item.Guid = &RssGuid{
-				IsPermaLink: "",
-				Guid:        string(entry.ID.AtomUri),
+				Guid: string(entry.ID.AtomUri),
 			}
 		}
 
@@ -1163,10 +1019,7 @@ func (f *AtomFeed) ToRss() *RssFeed {
 
 func (f *AtomFeed) ToAtom() *AtomFeed {
 	ff := &AtomFeed{
-		XMLName: xml.Name{
-			Space: "",
-			Local: "feed",
-		},
+		XMLName:              f.XMLName,
 		AtomCommonAttributes: f.AtomCommonAttributes,
 		Authors:              f.Authors,
 		Categories:           f.Categories,

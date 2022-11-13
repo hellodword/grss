@@ -408,7 +408,7 @@ The lyrics are &lt;a href=&quot;http://www.cs.cmu.edu/~mleone/gdead/dead-lyrics/
 	assert.Equal(t, "2.0", a.Version, a)
 	assert.Equal(t, "Dave Winer: Grateful Dead", a.Channel.Title.String(), a.Channel)
 	assert.Equal(t, "http://www.scripting.com/blog/categories/gratefulDead.html", a.Channel.Link, a.Channel)
-	assert.Equal(t, "A high-fidelity Grateful Dead song every day. This is where we&apos;re experimenting with enclosures on RSS news items that download when you&apos;re not using your computer. If it works (it will) it will be the end of the Click-And-Wait multimedia experience on the Internet. ", a.Channel.Description.String(), a.Channel)
+	assert.Equal(t, "A high-fidelity Grateful Dead song every day. This is where we're experimenting with enclosures on RSS news items that download when you're not using your computer. If it works (it will) it will be the end of the Click-And-Wait multimedia experience on the Internet. ", a.Channel.Description.String(), a.Channel)
 	assert.Equal(t, "data.ourfavoritesongs.com", a.Channel.Cloud.Attributes[0].Value, a.Channel.Cloud)
 	assert.Equal(t, "protocol", a.Channel.Cloud.Attributes[4].Name.Local, a.Channel.Cloud)
 	assert.Equal(t, 22, len(a.Channel.Items), a.Channel.Items)
@@ -558,7 +558,7 @@ func Test_RssFeed_008(t *testing.T) {
 	assert.Equal(t, "2.0", a.Version, a)
 	assert.Equal(t, "喔喔喔", a.Channel.Items[0].Title, a)
 	assert.Equal(t, "encoded", a.Channel.Items[0].ContentEncoded.XMLName.Local, a.Channel.Items[0].ContentEncoded)
-	assert.Equal(t, "&lt;section&gt;  &lt;article&gt;&lt;h3&gt;喔喔喔喔喔喔喔喔喔喔喔喔期&lt;/h3&gt;&lt;p&gt;喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔12月6喔喔喔喔喔喔喔喔。&lt;/p&gt;&lt;p&gt;&lt;a href=\"https://www.example.com/politics/2022/11/09/example-news-live-updates/#link-example\"&gt;喔喔喔喔喔&lt;/a&gt;喔喔喔喔喔喔喔喔喔喔去40喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔1986喔喔喔喔喔喔&lt;/p&gt;&lt;p&gt;喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔。&lt;/p&gt;&lt;p&gt;喔&lt;a href=\"https://www.example.com/example/2022/results/example?example-data-id=2022-SG&gt;", a.Channel.Items[0].ContentEncoded.String(), a.Channel.Items[0].ContentEncoded)
+	assert.Equal(t, "<section>  <article><h3>喔喔喔喔喔喔喔喔喔喔喔喔期</h3><p>喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔12月6喔喔喔喔喔喔喔喔。</p><p><a href=\"https://www.example.com/politics/2022/11/09/example-news-live-updates/#link-example\">喔喔喔喔喔</a>喔喔喔喔喔喔喔喔喔喔去40喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔1986喔喔喔喔喔喔</p><p>喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔。</p><p>喔<a href=\"https://www.example.com/example/2022/results/example?example-data-id=2022-SG>", a.Channel.Items[0].ContentEncoded.String(), a.Channel.Items[0].ContentEncoded)
 
 }
 

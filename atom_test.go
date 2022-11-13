@@ -126,7 +126,7 @@ func Test_AtomTextConstruct_XHTML(t *testing.T) {
 	assert.EqualValues(t, "en-us", a.Language, a)
 	assert.EqualValues(t, "http://title/base", a.Base, a)
 	assert.EqualValues(t, "http://www.w3.org/1999/xhtml", a.Div.UndefinedAttribute[0].Value, a)
-	assert.EqualValues(t, "\n        <h1>title</h1>\n    ", string(a.String()), a)
+	assert.EqualValues(t, "\n        <h1>title</h1>\n    ", a.Div.InnerXml, a)
 
 }
 
@@ -181,7 +181,7 @@ func Test_AtomTextConstruct_XHTMLWithDiv(t *testing.T) {
 	assert.EqualValues(t, "en-us", a.Language, a)
 	assert.EqualValues(t, "http://title/base", a.Base, a)
 	assert.EqualValues(t, "http://www.w3.org/1999/xhtml", a.Div.UndefinedAttribute[0].Value, a)
-	assert.EqualValues(t, "\n        <h1>\n            <div>title</div>\n        </h1>\n    ", a.Div.XmlText.String(), a)
+	assert.EqualValues(t, "\n        <h1>\n            <div>title</div>\n        </h1>\n    ", a.Div.XmlText.InnerXml, a)
 
 }
 
@@ -221,7 +221,7 @@ func Test_AtomContent_HTML(t *testing.T) {
 	assert.EqualValues(t, "en-us", a.Language, a)
 	assert.EqualValues(t, "http://title/base", a.Base, a)
 	assert.EqualValues(t, "http://www.w3.org/2005/Atom", a.UndefinedAttribute[0].Value, a)
-	assert.EqualValues(t, "&lt;h1&gt;title&lt;/h1&gt;", a.String(), a)
+	assert.EqualValues(t, "&lt;h1&gt;title&lt;/h1&gt;", a.InnerXml, a)
 
 }
 
@@ -247,7 +247,7 @@ func Test_AtomContent_XHTML(t *testing.T) {
 	assert.EqualValues(t, "en-us", a.Language, a)
 	assert.EqualValues(t, "http://title/base", a.Base, a)
 	assert.EqualValues(t, "http://www.w3.org/1999/xhtml", a.Div.UndefinedAttribute[0].Value, a)
-	assert.EqualValues(t, "\n        <h1>title</h1>\n    ", a.Div.XmlText.String(), a)
+	assert.EqualValues(t, "\n        <h1>title</h1>\n    ", a.Div.InnerXml, a)
 
 }
 
@@ -296,7 +296,7 @@ func Test_AtomContent_XML(t *testing.T) {
 	assert.EqualValues(t, "application/xml", a.Type, a)
 	assert.EqualValues(t, "en-us", a.Language, a)
 	assert.EqualValues(t, "http://title/base", a.Base, a)
-	assert.EqualValues(t, "\n    <x xmlns=\"http://x/\">title</x>\n", a.String(), a)
+	assert.EqualValues(t, "\n    <x xmlns=\"http://x/\">title</x>\n", a.InnerXml, a)
 }
 
 func Test_AtomEntry_001(t *testing.T) {
@@ -439,7 +439,7 @@ func Test_AtomEntry_003(t *testing.T) {
 	assert.EqualValues(t, "http://uri", a.Contributors[0].Uri, a)
 	assert.EqualValues(t, "term", a.Categories[0].Term, a)
 	assert.EqualValues(t, "application/xml", a.Content.Type, a)
-	assert.EqualValues(t, "\n        <x:x xmlns=\"http://x/\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns3=\"http://a9.com/-/spec/opensearch/1.1/\" xmlns:ns4=\"http://www.w3.org/1999/xhtml\" xmlns:x=\"http://x/\">Gustaf's Knäckebröd</x:x>\n    ", a.Content.String(), a.Content)
+	assert.EqualValues(t, "\n        <x:x xmlns=\"http://x/\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns3=\"http://a9.com/-/spec/opensearch/1.1/\" xmlns:ns4=\"http://www.w3.org/1999/xhtml\" xmlns:x=\"http://x/\">Gustaf's Knäckebröd</x:x>\n    ", a.Content.InnerXml, a.Content)
 
 }
 
@@ -515,7 +515,7 @@ func Test_AtomFeed_001(t *testing.T) {
 	assert.EqualValues(t, "logo", a.Logo.AtomUri, a)
 	assert.EqualValues(t, "rights", a.Rights.String(), a)
 	assert.EqualValues(t, "application/xml", a.Entries[0].Content.Type, a)
-	assert.EqualValues(t, "\n            <x:x xmlns=\"http://x/\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns3=\"http://a9.com/-/spec/opensearch/1.1/\" xmlns:ns4=\"http://www.w3.org/1999/xhtml\" xmlns:x=\"http://x/\">Gustaf's Knäckebröd</x:x>\n        ", a.Entries[0].Content.String(), a.Entries[0])
+	assert.EqualValues(t, "\n            <x:x xmlns=\"http://x/\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns3=\"http://a9.com/-/spec/opensearch/1.1/\" xmlns:ns4=\"http://www.w3.org/1999/xhtml\" xmlns:x=\"http://x/\">Gustaf's Knäckebröd</x:x>\n        ", a.Entries[0].Content.InnerXml, a.Entries[0])
 
 }
 
@@ -588,7 +588,7 @@ func Test_AtomFeed_002(t *testing.T) {
 	assert.EqualValues(t, "logo", a.Logo.AtomUri, a)
 	assert.EqualValues(t, "rights", a.Rights.Text, a)
 	assert.EqualValues(t, "application/xml", a.Entries[0].Content.Type, a)
-	assert.EqualValues(t, "\n            <x1 xmlns=\"xxx\" xmlns:y=\"yyy\">\n                <x2>\n                    <y:y1>Gustaf's Knäckebröd</y:y1>\n                </x2>\n            </x1>\n        ", a.Entries[0].Content.String(), a.Entries[0])
+	assert.EqualValues(t, "\n            <x1 xmlns=\"xxx\" xmlns:y=\"yyy\">\n                <x2>\n                    <y:y1>Gustaf's Knäckebröd</y:y1>\n                </x2>\n            </x1>\n        ", a.Entries[0].Content.InnerXml, a.Entries[0])
 
 }
 
