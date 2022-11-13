@@ -10,7 +10,23 @@ import (
 type XmlGeneric struct {
 	XMLName    xml.Name
 	Attributes []xml.Attr `xml:",any,attr,omitempty"`
-	Content    string     `xml:",innerxml"`
+	XmlText
+}
+
+type XmlText struct {
+	Text     string `xml:",chardata"`
+	Cdata    string `xml:",cdata"`
+	InnerXml string `xml:",innerxml"`
+}
+
+func (a *XmlText) String() string {
+	if a.InnerXml != "" {
+		return a.InnerXml
+	} else if a.Cdata != "" {
+		return a.Cdata
+	} else {
+		return a.Text
+	}
 }
 
 func newXmlDecoder(r io.Reader) *xml.Decoder {

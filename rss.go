@@ -50,11 +50,11 @@ type RssChannel struct {
 	// the required channel elements, each with a brief description, an example, and where available, a pointer to a more complete description.
 
 	// Title The name of the channel. It's how people refer to your service. If you have an HTML website that contains the same information as your RSS file, the title of your channel should be the same as the title of your website.
-	Title string `xml:"title"`
+	Title XmlText `xml:"title"`
 	// Link The URL to the HTML website corresponding to the channel.
 	Link string `xml:"link"`
 	// Description	Phrase or sentence describing the channel.
-	Description string `xml:"description"`
+	Description XmlText `xml:"description"`
 
 	// optional channel elements.
 
@@ -120,12 +120,12 @@ type RssItem struct {
 	Source *RssSource `xml:"source,omitempty"`
 
 	Content        *RssContent `xml:"content,omitempty"`
-	ContentEncoded *RssContent `xml:"content:encoded,omitempty"`
+	ContentEncoded *RssContent `xml:"http://purl.org/rss/1.0/modules/content/ encoded,omitempty"`
 }
 
 type RssContent struct {
 	XMLName xml.Name
-	Content []byte `xml:",innerxml"`
+	XmlText
 }
 
 type RssEnclosure struct {

@@ -104,21 +104,21 @@ func (a *AtomEmailAddress) UnmarshalXML(d *xml.Decoder, start xml.StartElement) 
 // AtomTextConstruct = AtomPlainTextConstruct | AtomXHTMLTextConstruct
 type AtomTextConstruct struct {
 	AtomCommonAttributes
-	Type string        `xml:"type,attr,omitempty"`
-	Text string        `xml:",chardata"`
-	Div  *AtomXhtmlDiv `xml:"div,omitempty"`
+	Type string `xml:"type,attr,omitempty"`
+	XmlText
+	Div *AtomXhtmlDiv `xml:"div,omitempty"`
 }
 
 func (a *AtomTextConstruct) String() string {
 	switch a.Type {
 	case "xhtml":
 		if a.Div != nil {
-			return string(a.Div.Text)
+			return a.Div.XmlText.String()
 		} else {
 			return ""
 		}
 	default:
-		return a.Text
+		return a.XmlText.String()
 	}
 }
 
@@ -158,7 +158,7 @@ func (a *AtomTextConstruct) String() string {
 type AtomXhtmlDiv struct {
 	UndefinedAttribute []xml.Attr `xml:",any,attr,omitempty"`
 	// TODO text | anyXHTML
-	Text []byte `xml:",innerxml"`
+	XmlText
 }
 
 //
@@ -330,7 +330,7 @@ type AtomFeed struct {
 type UndefinedContent struct {
 	XMLName    xml.Name
 	Attributes []xml.Attr `xml:",any,attr,omitempty"`
-	Content    string     `xml:",innerxml"`
+	XmlText
 }
 
 // AtomCategory The "atom:category" element conveys information about a category
@@ -599,20 +599,19 @@ type AtomContent struct {
 	AtomCommonAttributes
 	Type string   `xml:"type,attr,omitempty"`
 	Src  *AtomUri `xml:"src,attr,omitempty"`
-	//Text  string        `xml:",chardata"`
-	Div   *AtomXhtmlDiv `xml:"div,omitempty"`
-	Bytes []byte        `xml:",innerxml"`
+	XmlText
+	Div *AtomXhtmlDiv `xml:"div,omitempty"`
 }
 
 func (a *AtomContent) String() string {
 	switch a.Type {
 	case "xhtml":
 		if a.Div != nil {
-			return string(a.Div.Text)
+			return a.Div.XmlText.String()
 		} else {
 			return ""
 		}
 	default:
-		return string(a.Bytes)
+		return a.XmlText.String()
 	}
 }

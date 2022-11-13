@@ -181,7 +181,7 @@ func Test_AtomTextConstruct_XHTMLWithDiv(t *testing.T) {
 	assert.EqualValues(t, "en-us", a.Language, a)
 	assert.EqualValues(t, "http://title/base", a.Base, a)
 	assert.EqualValues(t, "http://www.w3.org/1999/xhtml", a.Div.UndefinedAttribute[0].Value, a)
-	assert.EqualValues(t, "\n        <h1>\n            <div>title</div>\n        </h1>\n    ", string(a.Div.Text), a)
+	assert.EqualValues(t, "\n        <h1>\n            <div>title</div>\n        </h1>\n    ", a.Div.XmlText.String(), a)
 
 }
 
@@ -247,7 +247,7 @@ func Test_AtomContent_XHTML(t *testing.T) {
 	assert.EqualValues(t, "en-us", a.Language, a)
 	assert.EqualValues(t, "http://title/base", a.Base, a)
 	assert.EqualValues(t, "http://www.w3.org/1999/xhtml", a.Div.UndefinedAttribute[0].Value, a)
-	assert.EqualValues(t, "\n        <h1>title</h1>\n    ", string(a.Div.Text), a)
+	assert.EqualValues(t, "\n        <h1>title</h1>\n    ", a.Div.XmlText.String(), a)
 
 }
 
@@ -274,7 +274,7 @@ func Test_AtomContent_XHTMLWithText(t *testing.T) {
 	assert.EqualValues(t, "en-us", a.Language, a)
 	assert.EqualValues(t, "http://title/base", a.Base, a)
 	assert.EqualValues(t, "http://www.w3.org/1999/xhtml", a.Div.UndefinedAttribute[0].Value, a)
-	assert.EqualValues(t, "\n        title\n    ", string(a.Div.Text), a)
+	assert.EqualValues(t, "\n        title\n    ", a.Div.XmlText.String(), a)
 }
 
 func Test_AtomContent_XML(t *testing.T) {
@@ -296,7 +296,7 @@ func Test_AtomContent_XML(t *testing.T) {
 	assert.EqualValues(t, "application/xml", a.Type, a)
 	assert.EqualValues(t, "en-us", a.Language, a)
 	assert.EqualValues(t, "http://title/base", a.Base, a)
-	assert.EqualValues(t, "\n    <x xmlns=\"http://x/\">title</x>\n", string(a.Bytes), a)
+	assert.EqualValues(t, "\n    <x xmlns=\"http://x/\">title</x>\n", a.String(), a)
 }
 
 func Test_AtomEntry_001(t *testing.T) {
@@ -505,7 +505,7 @@ func Test_AtomFeed_001(t *testing.T) {
 	assert.EqualValues(t, "2022-11-08T20:48:11Z", a.Updated.DateTime, a)
 	assert.EqualValues(t, "title", a.Title.Text, a)
 	assert.EqualValues(t, "subtitle", a.Subtitle.Text, a)
-	assert.EqualValues(t, "5", a.ExtensionElement[0].Content, a.ExtensionElement)
+	assert.EqualValues(t, "5", a.ExtensionElement[0].XmlText.String(), a.ExtensionElement)
 	assert.EqualValues(t, "startIndex", a.ExtensionElement[1].XMLName.Local, a.ExtensionElement)
 	assert.EqualValues(t, "href", a.Links[0].Href, a)
 	assert.EqualValues(t, "author@hp.com", a.Authors[0].Email, a)
