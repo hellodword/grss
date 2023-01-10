@@ -28,6 +28,10 @@
 - [ ] Atom to Atom 1.0
 - [ ] Custom Encoding
 
+## TODO
+
+- [ ] xml parser
+
 ## Thanks
 
 - [GitHub - encoding/xml: support xmlns prefixes](https://github.com/nbio/xml)
